@@ -42,7 +42,7 @@ interface Ranking {
 }
 
 function Stars({ value }: { value: number | null }) {
-  if (value === null) return <span className="text-gray-400 text-sm">No reviews</span>;
+  if (value === null) return <span className="text-gray-600 text-sm">No reviews</span>;
   return (
     <span className="flex items-center gap-1">
       <span className="text-yellow-400">{'★'.repeat(Math.round(value))}{'☆'.repeat(5 - Math.round(value))}</span>
@@ -248,7 +248,7 @@ export default function Dashboard() {
                 />
               </div>
               {rankings.length === 0 ? (
-                <p className="text-gray-400 text-center py-8">No reviews this month.</p>
+                <p className="text-gray-500 text-center py-8">No reviews this month.</p>
               ) : (
                 <div className="space-y-2">
                   {rankings.map((r, i) => (
@@ -300,7 +300,7 @@ export default function Dashboard() {
                   </button>
                 </div>
               </div>
-              <p className="text-xs text-gray-400 mt-3">Includes driver rankings, all feedback, and negative feedback sheet.</p>
+              <p className="text-xs text-gray-500 mt-3">Includes driver rankings, all feedback, and negative feedback sheet.</p>
             </div>
           </div>
         )}
@@ -330,7 +330,7 @@ export default function Dashboard() {
             </div>
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
               {drivers.length === 0 ? (
-                <p className="text-center text-gray-400 py-12">No drivers. Add one to get started.</p>
+                <p className="text-center text-gray-500 py-12">No drivers. Add one to get started.</p>
               ) : (
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-100">
@@ -350,12 +350,12 @@ export default function Dashboard() {
                           <Link href={`/admin/drivers/${d.id}`} className="font-medium text-gray-800 hover:text-blue-600 transition-colors">
                             {d.name}
                           </Link>
-                          {d.phone && <p className="text-xs text-gray-400 mt-0.5">{d.phone}</p>}
+                          {d.phone && <p className="text-xs text-gray-600 mt-0.5">{d.phone}</p>}
                         </td>
                         <td className="px-5 py-3 text-sm text-gray-600">
                           {d.vehicle_plate
                             ? <span className="font-mono bg-gray-100 px-2 py-0.5 rounded">{d.vehicle_plate}</span>
-                            : <span className="text-gray-400">—</span>}
+                            : <span className="text-gray-500">—</span>}
                         </td>
                         <td className="px-5 py-3"><Stars value={d.avg_stars} /></td>
                         <td className="px-5 py-3 text-sm text-gray-500">{d.total_reviews}</td>
@@ -421,7 +421,7 @@ export default function Dashboard() {
             </div>
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
               {vehicles.length === 0 ? (
-                <p className="text-center text-gray-400 py-12">No vehicles yet.</p>
+                <p className="text-center text-gray-500 py-12">No vehicles yet.</p>
               ) : (
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-100">
@@ -441,7 +441,7 @@ export default function Dashboard() {
                         </td>
                         <td className="px-5 py-3 text-gray-700">{v.model}</td>
                         <td className="px-5 py-3 text-gray-500">{v.year || '—'}</td>
-                        <td className="px-5 py-3 text-gray-600">{v.driver_name || <span className="text-gray-400">Unassigned</span>}</td>
+                        <td className="px-5 py-3 text-gray-600">{v.driver_name || <span className="text-gray-500">Unassigned</span>}</td>
                         <td className="px-5 py-3 text-right">
                           <div className="flex items-center gap-2 justify-end">
                             <button onClick={() => setVehicleModal(v)} className="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-2 py-1 rounded-lg transition-colors">Edit</button>
@@ -480,7 +480,7 @@ export default function Dashboard() {
             </div>
             <div className="space-y-3">
               {ratings.length === 0 ? (
-                <p className="text-center text-gray-400 py-12">No feedback yet.</p>
+                <p className="text-center text-gray-500 py-12">No feedback yet.</p>
               ) : (
                 ratings.map(r => (
                   <div key={r.id} className={`bg-white rounded-xl shadow-sm border p-4 ${r.stars <= 2 ? 'border-red-100' : 'border-gray-100'}`}>
@@ -491,13 +491,13 @@ export default function Dashboard() {
                         </Link>
                         <div className="flex items-center gap-1 mt-1">
                           {Array.from({ length: 5 }, (_, i) => (
-                            <span key={i} className={i < r.stars ? 'text-yellow-400' : 'text-gray-200'}>★</span>
+                            <span key={i} className={i < r.stars ? 'text-yellow-400' : 'text-gray-300'}>★</span>
                           ))}
                           {r.stars <= 2 && <span className="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full ml-1">Negative</span>}
                         </div>
                         {r.comment && <p className="text-gray-600 text-sm mt-2">{r.comment}</p>}
                       </div>
-                      <p className="text-xs text-gray-400 whitespace-nowrap ml-4">
+                      <p className="text-xs text-gray-600 whitespace-nowrap ml-4">
                         {new Date(r.created_at).toLocaleDateString()}
                       </p>
                     </div>
@@ -517,7 +517,7 @@ export default function Dashboard() {
             <p className="text-sm text-gray-500 text-center mb-4">{qrModal.name}</p>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={`/api/admin/qr/${qrModal.id}`} alt={`QR for ${qrModal.name}`} className="w-full rounded-xl border border-gray-100" />
-            <p className="text-xs text-gray-400 text-center mt-3">Right-click → Save to download</p>
+            <p className="text-xs text-gray-500 text-center mt-3">Right-click → Save to download</p>
             <div className="flex gap-2 mt-4">
               <Link
                 href={`/admin/drivers/${qrModal.id}`}

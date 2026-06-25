@@ -96,7 +96,7 @@ export default function RatePage() {
                 <div className="text-right">
                   <p className="text-gray-500">Vehicle</p>
                   <p className="font-semibold text-gray-800">{driver.vehicle_plate}</p>
-                  {driver.vehicle_model && <p className="text-xs text-gray-400">{driver.vehicle_model}</p>}
+                  {driver.vehicle_model && <p className="text-xs text-gray-600">{driver.vehicle_model}</p>}
                 </div>
               )}
             </div>
@@ -115,7 +115,7 @@ export default function RatePage() {
                     onMouseLeave={() => setHovered(0)}
                     className="text-4xl transition-transform hover:scale-110"
                   >
-                    <span className={n <= (hovered || stars) ? 'text-yellow-400' : 'text-gray-200'}>★</span>
+                    <span className={n <= (hovered || stars) ? 'text-yellow-400' : 'text-gray-300'}>★</span>
                   </button>
                 ))}
               </div>
@@ -151,7 +151,7 @@ export default function RatePage() {
             </button>
           </form>
         </div>
-        <p className="text-center text-xs text-gray-400 mt-4">VU Transportation Service</p>
+        <p className="text-center text-xs text-gray-500 mt-4">VU Transportation Service</p>
       </div>
     </div>
   );

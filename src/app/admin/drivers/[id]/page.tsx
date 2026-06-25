@@ -23,7 +23,7 @@ function Stars({ value, size = 'md' }: { value: number; size?: 'sm' | 'md' | 'lg
   return (
     <span className={cls}>
       {Array.from({ length: 5 }, (_, i) => (
-        <span key={i} className={i < value ? 'text-yellow-400' : 'text-gray-200'}>★</span>
+        <span key={i} className={i < value ? 'text-yellow-400' : 'text-gray-300'}>★</span>
       ))}
     </span>
   );
@@ -98,7 +98,7 @@ export default function DriverProfilePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center gap-4">
-        <Link href="/admin/dashboard" className="text-gray-400 hover:text-gray-700 transition-colors">
+        <Link href="/admin/dashboard" className="text-gray-600 hover:text-gray-800 transition-colors">
           ← Back
         </Link>
         <h1 className="font-bold text-gray-800">Driver Profile</h1>
@@ -142,7 +142,7 @@ export default function DriverProfilePage() {
                       )}
                     </div>
                     {driver.phone && <p className="text-gray-500 text-sm mt-0.5">{driver.phone}</p>}
-                    <p className="text-gray-400 text-xs mt-1">Added {new Date(driver.created_at).toLocaleDateString()}</p>
+                    <p className="text-gray-500 text-xs mt-1">Added {new Date(driver.created_at).toLocaleDateString()}</p>
                   </>
                 )}
               </div>
@@ -171,18 +171,18 @@ export default function DriverProfilePage() {
               <p className="text-xs text-gray-500 mb-1">Vehicle Plate</p>
               {driver.vehicle_plate
                 ? <span className="font-mono font-semibold bg-gray-100 px-2 py-1 rounded text-sm">{driver.vehicle_plate}</span>
-                : <span className="text-gray-400 text-sm">—</span>}
+                : <span className="text-gray-500 text-sm">—</span>}
             </div>
             <div>
               <p className="text-xs text-gray-500 mb-1">Vehicle Model</p>
               <p className="font-medium text-gray-800 text-sm">{driver.vehicle_model || '—'}</p>
-              {driver.vehicle_year && <p className="text-xs text-gray-400">{driver.vehicle_year}</p>}
+              {driver.vehicle_year && <p className="text-xs text-gray-600">{driver.vehicle_year}</p>}
             </div>
             <div>
               <p className="text-xs text-gray-500 mb-1">Avg Rating</p>
               {driver.avg_stars !== null
                 ? <div className="flex items-center gap-1"><Stars value={Math.round(driver.avg_stars)} size="sm" /><span className="text-sm font-semibold">{driver.avg_stars.toFixed(1)}</span></div>
-                : <span className="text-gray-400 text-sm">No reviews</span>}
+                : <span className="text-gray-500 text-sm">No reviews</span>}
             </div>
             <div>
               <p className="text-xs text-gray-500 mb-1">Total Reviews</p>
@@ -209,7 +209,7 @@ export default function DriverProfilePage() {
             <div className="mt-4 flex flex-col items-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={`/api/admin/qr/${id}`} alt="QR code" className="w-56 h-56 rounded-xl border border-gray-100" />
-              <p className="text-xs text-gray-400 mt-2">Right-click → Save image to download</p>
+              <p className="text-xs text-gray-500 mt-2">Right-click → Save image to download</p>
             </div>
           )}
         </div>
@@ -241,7 +241,7 @@ export default function DriverProfilePage() {
           </div>
 
           {filtered.length === 0 ? (
-            <p className="text-center text-gray-400 py-8">No {filter !== 'all' ? filter : ''} reviews.</p>
+            <p className="text-center text-gray-500 py-8">No {filter !== 'all' ? filter : ''} reviews.</p>
           ) : (
             <div className="space-y-3">
               {filtered.map(r => (
@@ -250,7 +250,7 @@ export default function DriverProfilePage() {
                 }`}>
                   <div className="flex items-center justify-between">
                     <Stars value={r.stars} size="sm" />
-                    <span className="text-xs text-gray-400">{new Date(r.created_at).toLocaleDateString()}</span>
+                    <span className="text-xs text-gray-600">{new Date(r.created_at).toLocaleDateString()}</span>
                   </div>
                   {r.comment && <p className="text-gray-700 text-sm mt-2">{r.comment}</p>}
                 </div>
