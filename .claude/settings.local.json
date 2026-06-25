@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-git)",
+      "Read(//Users/vincentfichtenberg/**)",
+      "Bash(npx create-next-app@latest reviews-app-src --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-git)",
+      "Bash(npx tsc *)",
+      "Bash(npm install *)",
+      "Bash(npx next *)",
+      "Bash(npm run *)",
+      "Bash(echo \"PID=$!\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/admin)",
+      "Bash(curl -s -c /tmp/cookies.txt -X POST http://localhost:3000/api/auth/login -H 'Content-Type: application/json' -d '{\"password\":\"admin123\"}')",
+      "Bash(curl -s -b /tmp/cookies.txt -X POST http://localhost:3000/api/admin/drivers -H 'Content-Type: application/json' -d '{\"name\":\"Nguyen Van A\",\"phone\":\"0901234567\"}')",
+      "Bash(curl -s -X POST http://localhost:3000/api/rate -H 'Content-Type: application/json' -d '{\"driverId\":1,\"stars\":5,\"comment\":\"Great driver, very polite!\"}')",
+      "Bash(curl -s -b /tmp/cookies.txt http://localhost:3000/api/admin/qr/1)",
+      "Bash(curl -s -b /tmp/cookies.txt \"http://localhost:3000/api/admin/rankings?month=2026-06\")",
+      "Bash(kill 93650)",
+      "Bash(curl -s -c /tmp/c2.txt -X POST http://localhost:3000/api/auth/login -H 'Content-Type: application/json' -d '{\"password\":\"admin123\"}')",
+      "Bash(curl -s -b /tmp/c2.txt -X POST http://localhost:3000/api/admin/drivers -H 'Content-Type: application/json' -d '{\"name\":\"Tran Van B\",\"phone\":\"0912345678\"}')",
+      "Bash(curl -s -b /tmp/c2.txt -X PUT http://localhost:3000/api/admin/drivers/1 -H 'Content-Type: application/json' -d '{\"name\":\"Nguyen Van A\",\"phone\":\"0901234567\",\"is_active\":false}')",
+      "Bash(curl -s -b /tmp/c2.txt \"http://localhost:3000/api/admin/drivers\")",
+      "Bash(python3 -c \"import sys,json;d=json.load\\(sys.stdin\\);print\\('Active drivers:',[\\(x['name'],x['is_active']\\) for x in d]\\)\")",
+      "Bash(curl -s -b /tmp/c2.txt \"http://localhost:3000/api/admin/drivers?all=1\")",
+      "Bash(python3 -c \"import sys,json;d=json.load\\(sys.stdin\\);print\\('All drivers:',[\\(x['name'],x['is_active']\\) for x in d]\\)\")",
+      "Bash(curl -s -o /tmp/test.xlsx -w \"%{http_code}\" -b /tmp/c2.txt \"http://localhost:3000/api/admin/export?month=2026-06&format=excel\")",
+      "mcp__Claude_in_Chrome__navigate",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "mcp__Claude_in_Chrome__browser_batch",
+      "mcp__Claude_in_Chrome__javascript_tool",
+      "Bash(gh auth *)",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
+    ]
+  }
+}
