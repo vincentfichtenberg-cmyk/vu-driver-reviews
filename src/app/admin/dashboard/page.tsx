@@ -12,6 +12,7 @@ interface Driver {
   name: string;
   phone: string | null;
   is_active: number;
+  vehicle_id: number | null;
   vehicle_plate: string | null;
   vehicle_model: string | null;
   avg_stars: number | null;
@@ -122,6 +123,7 @@ const T = {
     editDriverTitle: 'Edit Driver',
     namePlaceholder: 'Full name *',
     phonePlaceholder: 'Phone (optional)',
+    platePlaceholderDriver: 'License plate (optional)',
     cancel: 'Cancel',
     save: 'Save',
     saving: 'Saving...',
@@ -210,6 +212,7 @@ const T = {
     editDriverTitle: 'Sửa tài xế',
     namePlaceholder: 'Họ và tên *',
     phonePlaceholder: 'Số điện thoại (tùy chọn)',
+    platePlaceholderDriver: 'Biển số xe (tùy chọn)',
     cancel: 'Hủy',
     save: 'Lưu',
     saving: 'Đang lưu...',
@@ -361,11 +364,17 @@ export default function Dashboard() {
     await fetch(isNew ? '/api/admin/drivers' : `/api/admin/drivers/${driverModal.id}`, {
       method: isNew ? 'POST' : 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: driverModal.name, phone: driverModal.phone, is_active: driverModal.is_active ?? 1 }),
+      body: JSON.stringify({
+        name: driverModal.name,
+        phone: driverModal.phone,
+        is_active: driverModal.is_active ?? 1,
+        plate: driverModal.vehicle_plate,
+      }),
     });
     setDriverModal(null);
     setSaving(false);
     fetchDrivers();
+    fetchVehicles();
   }
 
   async function deleteDriver(id: number) {
@@ -813,6 +822,7 @@ export default function Dashboard() {
             <div className="space-y-3">
               <input type="text" placeholder={t.namePlaceholder} value={driverModal.name || ''} onChange={e => setDriverModal({ ...driverModal, name: e.target.value })} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" />
               <input type="text" placeholder={t.phonePlaceholder} value={driverModal.phone || ''} onChange={e => setDriverModal({ ...driverModal, phone: e.target.value })} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" />
+              <input type="text" placeholder={t.platePlaceholderDriver} value={driverModal.vehicle_plate || ''} onChange={e => setDriverModal({ ...driverModal, vehicle_plate: e.target.value })} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-blue-300" />
             </div>
             <div className="flex gap-2 mt-5">
               <button onClick={() => setDriverModal(null)} className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 rounded-xl text-sm">{t.cancel}</button>

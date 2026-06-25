@@ -12,6 +12,7 @@ interface DriverProfile {
   phone: string | null;
   is_active: number;
   created_at: string;
+  vehicle_id: number | null;
   vehicle_plate: string | null;
   vehicle_model: string | null;
   vehicle_year: number | null;
@@ -50,6 +51,7 @@ const T = {
     btnSave: 'Save',
     btnCancel: 'Cancel',
     phonePlaceholder: 'Phone',
+    platePlaceholder: 'License plate',
     confirmDeactivate: 'Deactivate this driver?',
     confirmReactivate: 'Reactivate this driver?',
   },
@@ -82,6 +84,7 @@ const T = {
     btnSave: 'Lưu',
     btnCancel: 'Hủy',
     phonePlaceholder: 'Số điện thoại',
+    platePlaceholder: 'Biển số xe',
     confirmDeactivate: 'Tạm ngưng tài xế này?',
     confirmReactivate: 'Kích hoạt lại tài xế này?',
   },
@@ -116,7 +119,7 @@ export default function DriverProfilePage() {
   const [qrVisible, setQrVisible] = useState(false);
   const [filter, setFilter] = useState<'all' | 'positive' | 'negative'>('all');
   const [editing, setEditing] = useState(false);
-  const [editForm, setEditForm] = useState({ name: '', phone: '' });
+  const [editForm, setEditForm] = useState({ name: '', phone: '', plate: '' });
 
   const t = T[lang];
 
@@ -136,7 +139,7 @@ export default function DriverProfilePage() {
     if (!r.ok) { setNotFound(true); return; }
     const data = await r.json();
     setDriver(data);
-    setEditForm({ name: data.name, phone: data.phone || '' });
+    setEditForm({ name: data.name, phone: data.phone || '', plate: data.vehicle_plate || '' });
   }, [id, router]);
 
   useEffect(() => { fetchDriver(); }, [fetchDriver]);
@@ -158,7 +161,7 @@ export default function DriverProfilePage() {
     await fetch(`/api/admin/drivers/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: editForm.name, phone: editForm.phone, is_active: driver?.is_active }),
+      body: JSON.stringify({ name: editForm.name, phone: editForm.phone, plate: editForm.plate, is_active: driver?.is_active }),
     });
     setEditing(false);
     fetchDriver();
@@ -219,6 +222,12 @@ export default function DriverProfilePage() {
                       onChange={e => setEditForm({ ...editForm, phone: e.target.value })}
                       placeholder={t.phonePlaceholder}
                       className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-52 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                    />
+                    <input
+                      value={editForm.plate}
+                      onChange={e => setEditForm({ ...editForm, plate: e.target.value })}
+                      placeholder={t.platePlaceholder}
+                      className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-52 font-mono uppercase focus:outline-none focus:ring-2 focus:ring-blue-300"
                     />
                     <div className="flex gap-2">
                       <button onClick={saveEdit} className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700">{t.btnSave}</button>

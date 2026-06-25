@@ -13,14 +13,14 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const db = await getDb();
   const rows = await db.query(`
     SELECT d.id, d.name, d.phone, d.is_active, d.created_at,
-           v.plate AS vehicle_plate, v.model AS vehicle_model, v.year AS vehicle_year,
+           v.id AS vehicle_id, v.plate AS vehicle_plate, v.model AS vehicle_model, v.year AS vehicle_year,
            ROUND(AVG(r.stars)::numeric, 2) AS avg_stars,
            COUNT(r.id) AS total_reviews
     FROM drivers d
     LEFT JOIN vehicles v ON v.driver_id = d.id
     LEFT JOIN ratings r ON r.driver_id = d.id
     WHERE d.id = $1
-    GROUP BY d.id, v.plate, v.model, v.year
+    GROUP BY d.id, v.id, v.plate, v.model, v.year
   `, [Number(id)]);
   if (!rows.length) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
@@ -35,13 +35,36 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const denied = await auth(); if (denied) return denied;
   const { id } = await params;
-  const { name, phone, is_active } = await req.json();
+  const { name, phone, is_active, plate } = await req.json();
   if (!name?.trim()) return NextResponse.json({ error: 'Name required' }, { status: 400 });
   const db = await getDb();
+
   await db.query(
     'UPDATE drivers SET name=$1, phone=$2, is_active=$3 WHERE id=$4',
     [name.trim(), phone?.trim() || null, is_active === false ? 0 : 1, Number(id)]
   );
+
+  if (plate !== undefined) {
+    const trimmedPlate = plate?.trim().toUpperCase() || '';
+    const existing = await db.query('SELECT id FROM vehicles WHERE driver_id = $1', [Number(id)]);
+
+    if (existing.length > 0) {
+      if (trimmedPlate) {
+        await db.query('UPDATE vehicles SET plate = $1 WHERE driver_id = $2', [trimmedPlate, Number(id)]);
+      }
+    } else if (trimmedPlate) {
+      const plateConflict = await db.query('SELECT id FROM vehicles WHERE plate = $1', [trimmedPlate]);
+      if (plateConflict.length > 0) {
+        await db.query('UPDATE vehicles SET driver_id = $1 WHERE plate = $2', [Number(id), trimmedPlate]);
+      } else {
+        await db.execute(
+          'INSERT INTO vehicles (plate, model, driver_id) VALUES ($1, $2, $3)',
+          [trimmedPlate, '', Number(id)]
+        );
+      }
+    }
+  }
+
   return NextResponse.json({ ok: true });
 }
 
