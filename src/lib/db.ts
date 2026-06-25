@@ -89,6 +89,8 @@ function initSqlite(db: import('better-sqlite3').Database) {
       driver_id INTEGER NOT NULL REFERENCES drivers(id) ON DELETE CASCADE,
       stars INTEGER NOT NULL CHECK(stars BETWEEN 1 AND 5),
       comment TEXT,
+      customer_name TEXT,
+      customer_contact TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
     CREATE TABLE IF NOT EXISTS alerts (
@@ -102,9 +104,17 @@ function initSqlite(db: import('better-sqlite3').Database) {
     );
   `);
   // Migration: add is_active if missing
-  const cols = db.prepare("PRAGMA table_info(drivers)").all() as { name: string }[];
-  if (!cols.find(c => c.name === 'is_active')) {
+  const driverCols = db.prepare("PRAGMA table_info(drivers)").all() as { name: string }[];
+  if (!driverCols.find(c => c.name === 'is_active')) {
     db.exec("ALTER TABLE drivers ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1");
+  }
+  // Migration: add customer fields to ratings if missing
+  const ratingCols = db.prepare("PRAGMA table_info(ratings)").all() as { name: string }[];
+  if (!ratingCols.find(c => c.name === 'customer_name')) {
+    db.exec("ALTER TABLE ratings ADD COLUMN customer_name TEXT");
+  }
+  if (!ratingCols.find(c => c.name === 'customer_contact')) {
+    db.exec("ALTER TABLE ratings ADD COLUMN customer_contact TEXT");
   }
 }
 
@@ -134,9 +144,13 @@ async function initPostgres(db: DB) {
       driver_id INTEGER NOT NULL REFERENCES drivers(id) ON DELETE CASCADE,
       stars INTEGER NOT NULL CHECK(stars BETWEEN 1 AND 5),
       comment TEXT,
+      customer_name TEXT,
+      customer_contact TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `);
+  await db.query(`ALTER TABLE ratings ADD COLUMN IF NOT EXISTS customer_name TEXT`);
+  await db.query(`ALTER TABLE ratings ADD COLUMN IF NOT EXISTS customer_contact TEXT`);
   await db.query(`
     CREATE TABLE IF NOT EXISTS alerts (
       id SERIAL PRIMARY KEY,

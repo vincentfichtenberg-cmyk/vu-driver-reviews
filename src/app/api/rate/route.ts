@@ -3,7 +3,7 @@ import { getDb } from '@/lib/db';
 
 export async function POST(req: NextRequest) {
   try {
-    const { driverId, stars, comment } = await req.json();
+    const { driverId, stars, comment, customerName, customerContact } = await req.json();
     if (!driverId || !stars || stars < 1 || stars > 5)
       return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
 
@@ -12,8 +12,8 @@ export async function POST(req: NextRequest) {
     if (!rows.length) return NextResponse.json({ error: 'Driver not found' }, { status: 404 });
 
     await db.execute(
-      'INSERT INTO ratings (driver_id, stars, comment) VALUES ($1, $2, $3)',
-      [driverId, stars, comment?.trim() || null]
+      'INSERT INTO ratings (driver_id, stars, comment, customer_name, customer_contact) VALUES ($1, $2, $3, $4, $5)',
+      [driverId, stars, comment?.trim() || null, customerName?.trim() || null, customerContact?.trim() || null]
     );
 
     if (stars <= 2) {

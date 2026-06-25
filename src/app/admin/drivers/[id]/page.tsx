@@ -18,7 +18,7 @@ interface DriverProfile {
   vehicle_year: number | null;
   avg_stars: number | null;
   total_reviews: number;
-  recent_ratings: { id: number; stars: number; comment: string | null; created_at: string }[];
+  recent_ratings: { id: number; stars: number; comment: string | null; customer_name: string | null; customer_contact: string | null; created_at: string }[];
 }
 
 const T = {
@@ -54,6 +54,7 @@ const T = {
     platePlaceholder: 'License plate',
     confirmDeactivate: 'Deactivate this driver?',
     confirmReactivate: 'Reactivate this driver?',
+    anonymous: 'Anonymous',
   },
   vi: {
     back: '← Quay lại',
@@ -87,6 +88,7 @@ const T = {
     platePlaceholder: 'Biển số xe',
     confirmDeactivate: 'Tạm ngưng tài xế này?',
     confirmReactivate: 'Kích hoạt lại tài xế này?',
+    anonymous: 'Ẩn danh',
   },
 };
 
@@ -350,6 +352,10 @@ export default function DriverProfilePage() {
                     <span className="text-xs text-gray-600">{new Date(r.created_at).toLocaleDateString()}</span>
                   </div>
                   {r.comment && <p className="text-gray-700 text-sm mt-2">{r.comment}</p>}
+                  <div className="flex items-center gap-3 mt-2 pt-2 border-t border-gray-200/50">
+                    <span className="text-xs text-gray-400">👤 {r.customer_name || t.anonymous}</span>
+                    {r.customer_contact && <span className="text-xs text-gray-400">📞 {r.customer_contact}</span>}
+                  </div>
                 </div>
               ))}
             </div>

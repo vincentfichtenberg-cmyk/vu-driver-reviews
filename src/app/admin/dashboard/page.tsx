@@ -25,6 +25,8 @@ interface Rating {
   driver_name: string;
   stars: number;
   comment: string | null;
+  customer_name: string | null;
+  customer_contact: string | null;
   created_at: string;
 }
 
@@ -105,6 +107,9 @@ const T = {
     confirmSeed: 'Import the 13 VUHQ drivers from the list? This will skip any already added.',
     seedResult: (added: number, skipped: number) => `Added: ${added} drivers.\nSkipped (already exist): ${skipped}`,
     errorSavingVehicle: 'Error saving',
+    customer: 'Customer',
+    contact: 'Contact',
+    anonymous: 'Anonymous',
   },
   vi: {
     appName: 'Quản Trị VU Reviews',
@@ -165,6 +170,9 @@ const T = {
     confirmSeed: 'Nhập 13 tài xế VUHQ từ danh sách? Những tài xế đã tồn tại sẽ được bỏ qua.',
     seedResult: (added: number, skipped: number) => `Đã thêm: ${added} tài xế.\nBỏ qua (đã tồn tại): ${skipped}`,
     errorSavingVehicle: 'Lỗi khi lưu',
+    customer: 'Khách hàng',
+    contact: 'Liên hệ',
+    anonymous: 'Ẩn danh',
   },
 };
 
@@ -569,13 +577,17 @@ export default function Dashboard() {
                 ratings.map(r => (
                   <div key={r.id} className={`bg-white rounded-xl shadow-sm border p-4 ${r.stars <= 2 ? 'border-red-100' : 'border-gray-100'}`}>
                     <div className="flex items-start justify-between">
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <Link href={`/admin/drivers/${drivers.find(d => d.name === r.driver_name)?.id}`} className="font-medium text-gray-800 hover:text-blue-600 transition-colors">{r.driver_name}</Link>
                         <div className="flex items-center gap-1 mt-1">
                           {Array.from({ length: 5 }, (_, i) => <span key={i} className={i < r.stars ? 'text-yellow-400' : 'text-gray-300'}>★</span>)}
                           {r.stars <= 2 && <span className="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full ml-1">{t.negative}</span>}
                         </div>
                         {r.comment && <p className="text-gray-600 text-sm mt-2">{r.comment}</p>}
+                        <div className="flex items-center gap-3 mt-2 pt-2 border-t border-gray-50">
+                          <span className="text-xs text-gray-400">👤 {r.customer_name || t.anonymous}</span>
+                          {r.customer_contact && <span className="text-xs text-gray-400">📞 {r.customer_contact}</span>}
+                        </div>
                       </div>
                       <p className="text-xs text-gray-600 whitespace-nowrap ml-4">{new Date(r.created_at).toLocaleDateString()}</p>
                     </div>

@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 
   const db = await getDb();
   const rows = await db.query(`
-    SELECT r.id, r.stars, r.comment, r.created_at,
+    SELECT r.id, r.stars, r.comment, r.customer_name, r.customer_contact, r.created_at,
            d.name AS driver_name
     FROM ratings r
     JOIN drivers d ON d.id = r.driver_id

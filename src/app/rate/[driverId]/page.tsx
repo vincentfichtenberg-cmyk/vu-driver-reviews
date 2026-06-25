@@ -22,6 +22,10 @@ const T = {
     labels: ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'],
     commentsLabel: 'Comments (optional)',
     placeholder: 'Share your experience...',
+    yourInfo: 'Your Information (optional)',
+    yourInfoHint: 'Help us follow up on your feedback.',
+    namePlaceholder: 'Your name',
+    contactPlaceholder: 'Phone or email',
     submit: 'Submit Review',
     submitting: 'Submitting...',
     thankYou: 'Thank you!',
@@ -41,6 +45,10 @@ const T = {
     labels: ['', 'Tệ', 'Tạm được', 'Tốt', 'Rất tốt', 'Xuất sắc'],
     commentsLabel: 'Nhận xét (tùy chọn)',
     placeholder: 'Chia sẻ trải nghiệm của bạn...',
+    yourInfo: 'Thông tin của bạn (tùy chọn)',
+    yourInfoHint: 'Giúp chúng tôi theo dõi phản hồi của bạn.',
+    namePlaceholder: 'Tên của bạn',
+    contactPlaceholder: 'Số điện thoại hoặc email',
     submit: 'Gửi đánh giá',
     submitting: 'Đang gửi...',
     thankYou: 'Cảm ơn bạn!',
@@ -63,6 +71,8 @@ export default function RatePage() {
   const [stars, setStars] = useState(0);
   const [hovered, setHovered] = useState(0);
   const [comment, setComment] = useState('');
+  const [customerName, setCustomerName] = useState('');
+  const [customerContact, setCustomerContact] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -94,7 +104,7 @@ export default function RatePage() {
     const res = await fetch('/api/rate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ driverId: Number(driverId), stars, comment }),
+      body: JSON.stringify({ driverId: Number(driverId), stars, comment, customerName, customerContact }),
     });
     if (res.ok) {
       setSubmitted(true);
@@ -218,6 +228,29 @@ export default function RatePage() {
                 maxLength={500}
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 resize-none"
               />
+            </div>
+
+            <div className="mb-6 bg-gray-50 rounded-xl p-4">
+              <p className="text-sm font-medium text-gray-700 mb-0.5">{t.yourInfo}</p>
+              <p className="text-xs text-gray-500 mb-3">{t.yourInfoHint}</p>
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  value={customerName}
+                  onChange={e => setCustomerName(e.target.value)}
+                  placeholder={t.namePlaceholder}
+                  maxLength={100}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+                />
+                <input
+                  type="text"
+                  value={customerContact}
+                  onChange={e => setCustomerContact(e.target.value)}
+                  placeholder={t.contactPlaceholder}
+                  maxLength={100}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+                />
+              </div>
             </div>
 
             {error && <p className="text-red-500 text-sm mb-4 text-center">{error}</p>}
