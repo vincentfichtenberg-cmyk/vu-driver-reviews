@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 type Tab = 'dashboard' | 'drivers' | 'vehicles' | 'ratings';
+type Lang = 'en' | 'vi';
 
 interface Driver {
   id: number;
@@ -51,8 +52,189 @@ interface Alert {
   created_at: string;
 }
 
-function Stars({ value }: { value: number | null }) {
-  if (value === null) return <span className="text-gray-600 text-sm">No reviews</span>;
+const T = {
+  en: {
+    appName: 'VU Reviews Admin',
+    activeDrivers: 'active drivers',
+    vehicles: 'vehicles',
+    logout: 'Log out',
+    alerts: 'Alerts',
+    markAllRead: 'Mark all read',
+    noAlerts: 'No alerts',
+    tabs: { dashboard: 'Dashboard', drivers: 'Drivers', vehicles: 'Vehicles', ratings: 'Feedback' },
+    // Stats
+    statActiveDrivers: 'Active Drivers',
+    statTotalReviews: 'Total Reviews',
+    statAvgRating: 'Avg Rating',
+    statNegative: 'Negative (1–2★)',
+    // Rankings
+    rankingsTitle: '🏆 Top 10 Drivers of the Month',
+    rankingsSubtitle: 'Ranked by average star rating',
+    noRankings: 'No reviews recorded this month yet.',
+    review: 'review',
+    reviews: 'reviews',
+    // Export
+    exportTitle: 'Export Monthly Report',
+    exportMonth: 'Month',
+    exportExcel: 'Export Excel',
+    exportPdf: 'Export PDF',
+    exportHint: 'Includes driver rankings, all feedback, and negative feedback sheet.',
+    // Drivers tab
+    driversTitle: 'Drivers',
+    showInactive: 'Show inactive',
+    importBtn: 'Import VUHQ List',
+    addDriver: '+ Add Driver',
+    noDrivers: 'No drivers. Add one to get started.',
+    colName: 'Name',
+    colVehicle: 'Vehicle',
+    colRating: 'Rating',
+    colReviews: 'Reviews',
+    colStatus: 'Status',
+    statusActive: 'Active',
+    statusInactive: 'Inactive',
+    noReviews: 'No reviews',
+    btnEdit: 'Edit',
+    btnDeactivate: 'Deactivate',
+    btnReactivate: 'Reactivate',
+    btnDelete: 'Delete',
+    // Vehicles tab
+    vehiclesTitle: 'Vehicles',
+    addVehicle: '+ Add Vehicle',
+    noVehicles: 'No vehicles yet.',
+    colPlate: 'Plate',
+    colModel: 'Model',
+    colYear: 'Year',
+    colDriver: 'Driver',
+    unassigned: 'Unassigned',
+    // Feedback tab
+    feedbackTitle: 'Feedback',
+    filterAll: 'All',
+    filterNegative: '⚠ Negative only',
+    noFeedback: 'No feedback yet.',
+    negative: 'Negative',
+    // QR Modal
+    qrTitle: 'QR Code',
+    qrHint: 'Right-click → Save to download',
+    viewProfile: 'View Profile',
+    close: 'Close',
+    // Driver modal
+    addDriverTitle: 'Add Driver',
+    editDriverTitle: 'Edit Driver',
+    namePlaceholder: 'Full name *',
+    phonePlaceholder: 'Phone (optional)',
+    cancel: 'Cancel',
+    save: 'Save',
+    saving: 'Saving...',
+    // Vehicle modal
+    addVehicleTitle: 'Add Vehicle',
+    editVehicleTitle: 'Edit Vehicle',
+    platePlaceholder: 'Plate number *',
+    modelPlaceholder: 'Model (e.g. Toyota Innova) *',
+    yearPlaceholder: 'Year (optional)',
+    noDriverAssigned: '— No driver assigned —',
+    // Confirms
+    confirmDeactivate: (name: string) => `Deactivate driver "${name}"?`,
+    confirmReactivate: (name: string) => `Reactivate driver "${name}"?`,
+    confirmDeleteDriver: 'Permanently delete this driver? All their ratings will also be deleted.',
+    confirmDeleteVehicle: 'Delete this vehicle?',
+    confirmSeed: 'Import the 13 VUHQ drivers from the list? This will skip any already added.',
+    seedResult: (added: number, skipped: number) => `Added: ${added} drivers.\nSkipped (already exist): ${skipped}`,
+    errorSavingVehicle: 'Error saving vehicle',
+  },
+  vi: {
+    appName: 'Quản Trị VU Reviews',
+    activeDrivers: 'tài xế đang hoạt động',
+    vehicles: 'xe',
+    logout: 'Đăng xuất',
+    alerts: 'Thông báo',
+    markAllRead: 'Đánh dấu tất cả đã đọc',
+    noAlerts: 'Không có thông báo',
+    tabs: { dashboard: 'Tổng quan', drivers: 'Tài xế', vehicles: 'Xe', ratings: 'Phản hồi' },
+    // Stats
+    statActiveDrivers: 'Tài xế hoạt động',
+    statTotalReviews: 'Tổng đánh giá',
+    statAvgRating: 'Điểm trung bình',
+    statNegative: 'Tiêu cực (1–2★)',
+    // Rankings
+    rankingsTitle: '🏆 Top 10 Tài Xế Tháng Này',
+    rankingsSubtitle: 'Xếp hạng theo điểm đánh giá trung bình',
+    noRankings: 'Chưa có đánh giá nào trong tháng này.',
+    review: 'đánh giá',
+    reviews: 'đánh giá',
+    // Export
+    exportTitle: 'Xuất Báo Cáo Tháng',
+    exportMonth: 'Tháng',
+    exportExcel: 'Xuất Excel',
+    exportPdf: 'Xuất PDF',
+    exportHint: 'Bao gồm xếp hạng tài xế, tất cả phản hồi và trang phản hồi tiêu cực.',
+    // Drivers tab
+    driversTitle: 'Tài xế',
+    showInactive: 'Hiển thị không hoạt động',
+    importBtn: 'Nhập danh sách VUHQ',
+    addDriver: '+ Thêm tài xế',
+    noDrivers: 'Chưa có tài xế. Thêm tài xế để bắt đầu.',
+    colName: 'Tên',
+    colVehicle: 'Xe',
+    colRating: 'Điểm',
+    colReviews: 'Đánh giá',
+    colStatus: 'Trạng thái',
+    statusActive: 'Hoạt động',
+    statusInactive: 'Ngưng hoạt động',
+    noReviews: 'Chưa có đánh giá',
+    btnEdit: 'Sửa',
+    btnDeactivate: 'Tạm ngưng',
+    btnReactivate: 'Kích hoạt lại',
+    btnDelete: 'Xóa',
+    // Vehicles tab
+    vehiclesTitle: 'Xe',
+    addVehicle: '+ Thêm xe',
+    noVehicles: 'Chưa có xe nào.',
+    colPlate: 'Biển số',
+    colModel: 'Dòng xe',
+    colYear: 'Năm',
+    colDriver: 'Tài xế',
+    unassigned: 'Chưa gán',
+    // Feedback tab
+    feedbackTitle: 'Phản hồi',
+    filterAll: 'Tất cả',
+    filterNegative: '⚠ Tiêu cực',
+    noFeedback: 'Chưa có phản hồi.',
+    negative: 'Tiêu cực',
+    // QR Modal
+    qrTitle: 'Mã QR',
+    qrHint: 'Nhấp chuột phải → Lưu để tải về',
+    viewProfile: 'Xem hồ sơ',
+    close: 'Đóng',
+    // Driver modal
+    addDriverTitle: 'Thêm tài xế',
+    editDriverTitle: 'Sửa tài xế',
+    namePlaceholder: 'Họ và tên *',
+    phonePlaceholder: 'Số điện thoại (tùy chọn)',
+    cancel: 'Hủy',
+    save: 'Lưu',
+    saving: 'Đang lưu...',
+    // Vehicle modal
+    addVehicleTitle: 'Thêm xe',
+    editVehicleTitle: 'Sửa xe',
+    platePlaceholder: 'Biển số *',
+    modelPlaceholder: 'Dòng xe (vd. Toyota Innova) *',
+    yearPlaceholder: 'Năm (tùy chọn)',
+    noDriverAssigned: '— Chưa gán tài xế —',
+    // Confirms
+    confirmDeactivate: (name: string) => `Tạm ngưng tài xế "${name}"?`,
+    confirmReactivate: (name: string) => `Kích hoạt lại tài xế "${name}"?`,
+    confirmDeleteDriver: 'Xóa vĩnh viễn tài xế này? Tất cả đánh giá của họ cũng sẽ bị xóa.',
+    confirmDeleteVehicle: 'Xóa xe này?',
+    confirmSeed: 'Nhập 13 tài xế VUHQ từ danh sách? Những tài xế đã tồn tại sẽ được bỏ qua.',
+    seedResult: (added: number, skipped: number) => `Đã thêm: ${added} tài xế.\nBỏ qua (đã tồn tại): ${skipped}`,
+    errorSavingVehicle: 'Lỗi khi lưu xe',
+  },
+};
+
+const MEDAL = ['🥇', '🥈', '🥉'];
+
+function Stars({ value, noReviews }: { value: number | null; noReviews: string }) {
+  if (value === null) return <span className="text-gray-600 text-sm">{noReviews}</span>;
   return (
     <span className="flex items-center gap-1">
       <span className="text-yellow-400">{'★'.repeat(Math.round(value))}{'☆'.repeat(5 - Math.round(value))}</span>
@@ -61,10 +243,18 @@ function Stars({ value }: { value: number | null }) {
   );
 }
 
-const MEDAL = ['🥇', '🥈', '🥉'];
+function LangToggle({ lang, onChange }: { lang: Lang; onChange: (l: Lang) => void }) {
+  return (
+    <div className="flex gap-1 bg-gray-100 rounded-lg p-1 text-xs font-medium">
+      <button onClick={() => onChange('vi')} className={`px-2.5 py-1 rounded-md transition-colors ${lang === 'vi' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>🇻🇳 VI</button>
+      <button onClick={() => onChange('en')} className={`px-2.5 py-1 rounded-md transition-colors ${lang === 'en' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>🇬🇧 EN</button>
+    </div>
+  );
+}
 
 export default function Dashboard() {
   const router = useRouter();
+  const [lang, setLang] = useState<Lang>('vi');
   const [tab, setTab] = useState<Tab>('dashboard');
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -78,11 +268,21 @@ export default function Dashboard() {
   const [driverModal, setDriverModal] = useState<Partial<Driver> | null>(null);
   const [vehicleModal, setVehicleModal] = useState<Partial<Vehicle> | null>(null);
   const [saving, setSaving] = useState(false);
-
-  // Alerts state
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [alertsOpen, setAlertsOpen] = useState(false);
   const alertsRef = useRef<HTMLDivElement>(null);
+
+  const t = T[lang];
+
+  useEffect(() => {
+    const saved = localStorage.getItem('vu-lang') as Lang | null;
+    if (saved === 'en' || saved === 'vi') setLang(saved);
+  }, []);
+
+  function switchLang(l: Lang) {
+    setLang(l);
+    localStorage.setItem('vu-lang', l);
+  }
 
   const fetchDrivers = useCallback(async () => {
     const r = await fetch(`/api/admin/drivers${showInactive ? '?all=1' : ''}`);
@@ -97,9 +297,7 @@ export default function Dashboard() {
   }, [router]);
 
   const fetchRatings = useCallback(async () => {
-    const url = ratingFilter === 'negative'
-      ? '/api/admin/ratings?maxStars=2'
-      : '/api/admin/ratings';
+    const url = ratingFilter === 'negative' ? '/api/admin/ratings?maxStars=2' : '/api/admin/ratings';
     const r = await fetch(url);
     if (r.status === 401) { router.push('/admin'); return; }
     setRatings(await r.json());
@@ -122,12 +320,9 @@ export default function Dashboard() {
   useEffect(() => { fetchRankings(rankMonth); }, [fetchRankings, rankMonth]);
   useEffect(() => { fetchAlerts(); }, [fetchAlerts]);
 
-  // Close alerts dropdown on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (alertsRef.current && !alertsRef.current.contains(e.target as Node)) {
-        setAlertsOpen(false);
-      }
+      if (alertsRef.current && !alertsRef.current.contains(e.target as Node)) setAlertsOpen(false);
     }
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
@@ -139,26 +334,18 @@ export default function Dashboard() {
   }
 
   async function markAlertRead(id: number) {
-    await fetch('/api/admin/alerts', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
-    });
+    await fetch('/api/admin/alerts', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
     fetchAlerts();
   }
 
   async function markAllAlertsRead() {
-    await fetch('/api/admin/alerts', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ all: true }),
-    });
+    await fetch('/api/admin/alerts', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ all: true }) });
     fetchAlerts();
   }
 
   async function toggleDriverActive(d: Driver) {
-    const action = d.is_active ? 'Deactivate' : 'Reactivate';
-    if (!confirm(`${action} driver "${d.name}"?`)) return;
+    const msg = d.is_active ? t.confirmDeactivate(d.name) : t.confirmReactivate(d.name);
+    if (!confirm(msg)) return;
     await fetch(`/api/admin/drivers/${d.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -171,8 +358,7 @@ export default function Dashboard() {
     if (!driverModal) return;
     setSaving(true);
     const isNew = !driverModal.id;
-    const url = isNew ? '/api/admin/drivers' : `/api/admin/drivers/${driverModal.id}`;
-    await fetch(url, {
+    await fetch(isNew ? '/api/admin/drivers' : `/api/admin/drivers/${driverModal.id}`, {
       method: isNew ? 'POST' : 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: driverModal.name, phone: driverModal.phone, is_active: driverModal.is_active ?? 1 }),
@@ -183,7 +369,7 @@ export default function Dashboard() {
   }
 
   async function deleteDriver(id: number) {
-    if (!confirm('Permanently delete this driver? All their ratings will also be deleted.')) return;
+    if (!confirm(t.confirmDeleteDriver)) return;
     await fetch(`/api/admin/drivers/${id}`, { method: 'DELETE' });
     fetchDrivers();
   }
@@ -192,15 +378,14 @@ export default function Dashboard() {
     if (!vehicleModal) return;
     setSaving(true);
     const isNew = !vehicleModal.id;
-    const url = isNew ? '/api/admin/vehicles' : `/api/admin/vehicles/${vehicleModal.id}`;
-    const res = await fetch(url, {
+    const res = await fetch(isNew ? '/api/admin/vehicles' : `/api/admin/vehicles/${vehicleModal.id}`, {
       method: isNew ? 'POST' : 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(vehicleModal),
     });
     if (!res.ok) {
       const e = await res.json();
-      alert(e.error || 'Error saving vehicle');
+      alert(e.error || t.errorSavingVehicle);
     } else {
       setVehicleModal(null);
       fetchVehicles();
@@ -210,31 +395,31 @@ export default function Dashboard() {
   }
 
   async function deleteVehicle(id: number) {
-    if (!confirm('Delete this vehicle?')) return;
+    if (!confirm(t.confirmDeleteVehicle)) return;
     await fetch(`/api/admin/vehicles/${id}`, { method: 'DELETE' });
     fetchVehicles();
     fetchDrivers();
+  }
+
+  async function seedDrivers() {
+    if (!confirm(t.confirmSeed)) return;
+    const res = await fetch('/api/admin/seed', { method: 'POST' });
+    const data = await res.json();
+    alert(t.seedResult(data.added?.length ?? 0, data.skipped?.length ?? 0));
+    fetchDrivers();
+    fetchVehicles();
   }
 
   function exportReport(format: 'excel' | 'pdf') {
     window.open(`/api/admin/export?month=${exportMonth}&format=${format}`, '_blank');
   }
 
-  const tabs: { id: Tab; label: string; icon: string }[] = [
-    { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-    { id: 'drivers', label: 'Drivers', icon: '👤' },
-    { id: 'vehicles', label: 'Vehicles', icon: '🚗' },
-    { id: 'ratings', label: 'Feedback', icon: '⭐' },
+  const tabs: { id: Tab; icon: string }[] = [
+    { id: 'dashboard', icon: '📊' },
+    { id: 'drivers', icon: '👤' },
+    { id: 'vehicles', icon: '🚗' },
+    { id: 'ratings', icon: '⭐' },
   ];
-
-  async function seedDrivers() {
-    if (!confirm('Import the 13 VUHQ drivers from the list? This will skip any already added.')) return;
-    const res = await fetch('/api/admin/seed', { method: 'POST' });
-    const data = await res.json();
-    alert(`Added: ${data.added?.length ?? 0} drivers.\nSkipped (already exist): ${data.skipped?.length ?? 0}`);
-    fetchDrivers();
-    fetchVehicles();
-  }
 
   const activeDrivers = drivers.filter(d => d.is_active);
   const negativeRatings = ratings.filter(r => r.stars <= 2);
@@ -246,17 +431,18 @@ export default function Dashboard() {
         <div className="flex items-center gap-3">
           <span className="text-2xl">🚗</span>
           <div>
-            <h1 className="font-bold text-gray-800">VU Reviews Admin</h1>
-            <p className="text-xs text-gray-500">{activeDrivers.length} active drivers · {vehicles.length} vehicles</p>
+            <h1 className="font-bold text-gray-800">{t.appName}</h1>
+            <p className="text-xs text-gray-500">{activeDrivers.length} {t.activeDrivers} · {vehicles.length} {t.vehicles}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <LangToggle lang={lang} onChange={switchLang} />
+
           {/* Alerts bell */}
           <div className="relative" ref={alertsRef}>
             <button
               onClick={() => setAlertsOpen(!alertsOpen)}
               className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              title="Alerts"
             >
               <span className="text-xl">🔔</span>
               {unreadAlerts.length > 0 && (
@@ -265,37 +451,24 @@ export default function Dashboard() {
                 </span>
               )}
             </button>
-
             {alertsOpen && (
               <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                  <h3 className="font-semibold text-gray-800">Alerts</h3>
+                  <h3 className="font-semibold text-gray-800">{t.alerts}</h3>
                   {unreadAlerts.length > 0 && (
-                    <button
-                      onClick={markAllAlertsRead}
-                      className="text-xs text-blue-600 hover:text-blue-800"
-                    >
-                      Mark all read
-                    </button>
+                    <button onClick={markAllAlertsRead} className="text-xs text-blue-600 hover:text-blue-800">{t.markAllRead}</button>
                   )}
                 </div>
                 {alerts.length === 0 ? (
-                  <p className="text-center text-gray-500 py-6 text-sm">No alerts</p>
+                  <p className="text-center text-gray-500 py-6 text-sm">{t.noAlerts}</p>
                 ) : (
                   <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
                     {alerts.map(a => (
-                      <div
-                        key={a.id}
-                        className={`px-4 py-3 flex gap-3 ${!a.is_read ? 'bg-red-50' : ''}`}
-                      >
+                      <div key={a.id} className={`px-4 py-3 flex gap-3 ${!a.is_read ? 'bg-red-50' : ''}`}>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-red-500 font-bold text-xs">
-                              {'★'.repeat(a.stars)} {a.stars}★
-                            </span>
-                            {!a.is_read && (
-                              <span className="w-2 h-2 bg-red-500 rounded-full flex-shrink-0" />
-                            )}
+                            <span className="text-red-500 font-bold text-xs">{'★'.repeat(a.stars)} {a.stars}★</span>
+                            {!a.is_read && <span className="w-2 h-2 bg-red-500 rounded-full flex-shrink-0" />}
                           </div>
                           <Link
                             href={`/admin/drivers/${a.driver_id}`}
@@ -304,21 +477,11 @@ export default function Dashboard() {
                           >
                             {a.driver_name}
                           </Link>
-                          {a.comment && (
-                            <p className="text-xs text-gray-600 mt-0.5 truncate">{a.comment}</p>
-                          )}
-                          <p className="text-xs text-gray-500 mt-0.5">
-                            {new Date(a.created_at).toLocaleString()}
-                          </p>
+                          {a.comment && <p className="text-xs text-gray-600 mt-0.5 truncate">{a.comment}</p>}
+                          <p className="text-xs text-gray-500 mt-0.5">{new Date(a.created_at).toLocaleString()}</p>
                         </div>
                         {!a.is_read && (
-                          <button
-                            onClick={() => markAlertRead(a.id)}
-                            className="text-xs text-gray-400 hover:text-gray-600 flex-shrink-0 self-start mt-0.5"
-                            title="Dismiss"
-                          >
-                            ✕
-                          </button>
+                          <button onClick={() => markAlertRead(a.id)} className="text-xs text-gray-400 hover:text-gray-600 flex-shrink-0 self-start mt-0.5">✕</button>
                         )}
                       </div>
                     ))}
@@ -328,23 +491,21 @@ export default function Dashboard() {
             )}
           </div>
 
-          <button onClick={logout} className="text-sm text-gray-500 hover:text-red-500 transition-colors">
-            Log out
-          </button>
+          <button onClick={logout} className="text-sm text-gray-500 hover:text-red-500 transition-colors">{t.logout}</button>
         </div>
       </header>
 
       <nav className="bg-white border-b border-gray-200 px-6 flex gap-1">
-        {tabs.map(t => (
+        {tabs.map(tab_ => (
           <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
+            key={tab_.id}
+            onClick={() => setTab(tab_.id)}
             className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors relative ${
-              tab === t.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-800'
+              tab === tab_.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
-            {t.icon} {t.label}
-            {t.id === 'ratings' && negativeRatings.length > 0 && (
+            {tab_.icon} {t.tabs[tab_.id]}
+            {tab_.id === 'ratings' && negativeRatings.length > 0 && (
               <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full" />
             )}
           </button>
@@ -358,21 +519,21 @@ export default function Dashboard() {
           <div className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
               <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-                <p className="text-gray-500 text-sm">Active Drivers</p>
+                <p className="text-gray-500 text-sm">{t.statActiveDrivers}</p>
                 <p className="text-3xl font-bold text-gray-800 mt-1">{activeDrivers.length}</p>
               </div>
               <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-                <p className="text-gray-500 text-sm">Total Reviews</p>
+                <p className="text-gray-500 text-sm">{t.statTotalReviews}</p>
                 <p className="text-3xl font-bold text-gray-800 mt-1">{ratings.length}</p>
               </div>
               <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-                <p className="text-gray-500 text-sm">Avg Rating</p>
+                <p className="text-gray-500 text-sm">{t.statAvgRating}</p>
                 <p className="text-3xl font-bold text-gray-800 mt-1">
                   {ratings.length ? (ratings.reduce((s, r) => s + r.stars, 0) / ratings.length).toFixed(1) : '—'}
                 </p>
               </div>
               <div className="bg-white rounded-xl p-5 shadow-sm border border-red-100">
-                <p className="text-red-500 text-sm">Negative (1–2★)</p>
+                <p className="text-red-500 text-sm">{t.statNegative}</p>
                 <p className="text-3xl font-bold text-red-600 mt-1">{negativeRatings.length}</p>
               </div>
             </div>
@@ -381,8 +542,8 @@ export default function Dashboard() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
               <div className="flex items-center justify-between mb-5">
                 <div>
-                  <h2 className="font-bold text-gray-800 text-lg">🏆 Top 10 Drivers of the Month</h2>
-                  <p className="text-xs text-gray-500 mt-0.5">Ranked by average star rating</p>
+                  <h2 className="font-bold text-gray-800 text-lg">{t.rankingsTitle}</h2>
+                  <p className="text-xs text-gray-500 mt-0.5">{t.rankingsSubtitle}</p>
                 </div>
                 <input
                   type="month"
@@ -392,7 +553,7 @@ export default function Dashboard() {
                 />
               </div>
               {rankings.length === 0 ? (
-                <p className="text-gray-500 text-center py-10">No reviews recorded this month yet.</p>
+                <p className="text-gray-500 text-center py-10">{t.noRankings}</p>
               ) : (
                 <div className="space-y-2">
                   {rankings.map((r, i) => (
@@ -416,7 +577,7 @@ export default function Dashboard() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-gray-800 truncate">{r.name}</p>
-                        <p className="text-xs text-gray-500">{r.total_reviews} review{r.total_reviews !== 1 ? 's' : ''}</p>
+                        <p className="text-xs text-gray-500">{r.total_reviews} {r.total_reviews === 1 ? t.review : t.reviews}</p>
                       </div>
                       <div className="flex items-center gap-1 flex-shrink-0">
                         <span className="text-yellow-400 text-sm">{'★'.repeat(Math.round(r.avg_stars))}{'☆'.repeat(5 - Math.round(r.avg_stars))}</span>
@@ -430,10 +591,10 @@ export default function Dashboard() {
 
             {/* Export */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-              <h2 className="font-semibold text-gray-800 mb-4">Export Monthly Report</h2>
+              <h2 className="font-semibold text-gray-800 mb-4">{t.exportTitle}</h2>
               <div className="flex flex-wrap items-center gap-3">
                 <div>
-                  <label className="text-xs text-gray-500 block mb-1">Month</label>
+                  <label className="text-xs text-gray-500 block mb-1">{t.exportMonth}</label>
                   <input
                     type="month"
                     value={exportMonth}
@@ -442,21 +603,15 @@ export default function Dashboard() {
                   />
                 </div>
                 <div className="flex gap-2 mt-4">
-                  <button
-                    onClick={() => exportReport('excel')}
-                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors"
-                  >
-                    <span>📊</span> Export Excel
+                  <button onClick={() => exportReport('excel')} className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors">
+                    <span>📊</span> {t.exportExcel}
                   </button>
-                  <button
-                    onClick={() => exportReport('pdf')}
-                    className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors"
-                  >
-                    <span>📄</span> Export PDF
+                  <button onClick={() => exportReport('pdf')} className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors">
+                    <span>📄</span> {t.exportPdf}
                   </button>
                 </div>
               </div>
-              <p className="text-xs text-gray-500 mt-3">Includes driver rankings, all feedback, and negative feedback sheet.</p>
+              <p className="text-xs text-gray-500 mt-3">{t.exportHint}</p>
             </div>
           </div>
         )}
@@ -466,44 +621,33 @@ export default function Dashboard() {
           <div>
             <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
               <div className="flex items-center gap-3">
-                <h2 className="font-semibold text-gray-800 text-lg">Drivers</h2>
+                <h2 className="font-semibold text-gray-800 text-lg">{t.driversTitle}</h2>
                 <label className="flex items-center gap-1.5 text-sm text-gray-500 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={showInactive}
-                    onChange={e => setShowInactive(e.target.checked)}
-                    className="rounded"
-                  />
-                  Show inactive
+                  <input type="checkbox" checked={showInactive} onChange={e => setShowInactive(e.target.checked)} className="rounded" />
+                  {t.showInactive}
                 </label>
               </div>
               <div className="flex gap-2">
-                <button
-                  onClick={seedDrivers}
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium px-4 py-2 rounded-xl transition-colors"
-                >
-                  Import VUHQ List
+                <button onClick={seedDrivers} className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium px-4 py-2 rounded-xl transition-colors">
+                  {t.importBtn}
                 </button>
-                <button
-                  onClick={() => setDriverModal({ name: '', phone: '', is_active: 1 })}
-                  className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors"
-                >
-                  + Add Driver
+                <button onClick={() => setDriverModal({ name: '', phone: '', is_active: 1 })} className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors">
+                  {t.addDriver}
                 </button>
               </div>
             </div>
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
               {drivers.length === 0 ? (
-                <p className="text-center text-gray-500 py-12">No drivers. Add one to get started.</p>
+                <p className="text-center text-gray-500 py-12">{t.noDrivers}</p>
               ) : (
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-100">
                     <tr>
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Name</th>
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Vehicle</th>
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Rating</th>
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Reviews</th>
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">{t.colName}</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">{t.colVehicle}</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">{t.colRating}</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">{t.colReviews}</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">{t.colStatus}</th>
                       <th className="px-5 py-3"></th>
                     </tr>
                   </thead>
@@ -511,9 +655,7 @@ export default function Dashboard() {
                     {drivers.map(d => (
                       <tr key={d.id} className={`hover:bg-gray-50 ${!d.is_active ? 'opacity-60' : ''}`}>
                         <td className="px-5 py-3">
-                          <Link href={`/admin/drivers/${d.id}`} className="font-medium text-gray-800 hover:text-blue-600 transition-colors">
-                            {d.name}
-                          </Link>
+                          <Link href={`/admin/drivers/${d.id}`} className="font-medium text-gray-800 hover:text-blue-600 transition-colors">{d.name}</Link>
                           {d.phone && <p className="text-xs text-gray-600 mt-0.5">{d.phone}</p>}
                         </td>
                         <td className="px-5 py-3 text-sm text-gray-600">
@@ -521,45 +663,21 @@ export default function Dashboard() {
                             ? <span className="font-mono bg-gray-100 px-2 py-0.5 rounded">{d.vehicle_plate}</span>
                             : <span className="text-gray-500">—</span>}
                         </td>
-                        <td className="px-5 py-3"><Stars value={d.avg_stars} /></td>
+                        <td className="px-5 py-3"><Stars value={d.avg_stars} noReviews={t.noReviews} /></td>
                         <td className="px-5 py-3 text-sm text-gray-500">{d.total_reviews}</td>
                         <td className="px-5 py-3">
-                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                            d.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                          }`}>
-                            {d.is_active ? 'Active' : 'Inactive'}
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${d.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                            {d.is_active ? t.statusActive : t.statusInactive}
                           </span>
                         </td>
                         <td className="px-5 py-3 text-right">
                           <div className="flex items-center gap-2 justify-end">
-                            <button
-                              onClick={() => setQrModal({ id: d.id, name: d.name })}
-                              className="text-xs bg-green-50 hover:bg-green-100 text-green-700 px-2 py-1 rounded-lg transition-colors"
-                            >
-                              QR
+                            <button onClick={() => setQrModal({ id: d.id, name: d.name })} className="text-xs bg-green-50 hover:bg-green-100 text-green-700 px-2 py-1 rounded-lg transition-colors">QR</button>
+                            <button onClick={() => setDriverModal({ ...d })} className="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-2 py-1 rounded-lg transition-colors">{t.btnEdit}</button>
+                            <button onClick={() => toggleDriverActive(d)} className={`text-xs px-2 py-1 rounded-lg transition-colors ${d.is_active ? 'bg-yellow-50 hover:bg-yellow-100 text-yellow-700' : 'bg-green-50 hover:bg-green-100 text-green-700'}`}>
+                              {d.is_active ? t.btnDeactivate : t.btnReactivate}
                             </button>
-                            <button
-                              onClick={() => setDriverModal({ ...d })}
-                              className="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-2 py-1 rounded-lg transition-colors"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => toggleDriverActive(d)}
-                              className={`text-xs px-2 py-1 rounded-lg transition-colors ${
-                                d.is_active
-                                  ? 'bg-yellow-50 hover:bg-yellow-100 text-yellow-700'
-                                  : 'bg-green-50 hover:bg-green-100 text-green-700'
-                              }`}
-                            >
-                              {d.is_active ? 'Deactivate' : 'Reactivate'}
-                            </button>
-                            <button
-                              onClick={() => deleteDriver(d.id)}
-                              className="text-xs bg-red-50 hover:bg-red-100 text-red-600 px-2 py-1 rounded-lg transition-colors"
-                            >
-                              Delete
-                            </button>
+                            <button onClick={() => deleteDriver(d.id)} className="text-xs bg-red-50 hover:bg-red-100 text-red-600 px-2 py-1 rounded-lg transition-colors">{t.btnDelete}</button>
                           </div>
                         </td>
                       </tr>
@@ -575,41 +693,36 @@ export default function Dashboard() {
         {tab === 'vehicles' && (
           <div>
             <div className="flex justify-between items-center mb-4">
-              <h2 className="font-semibold text-gray-800 text-lg">Vehicles ({vehicles.length})</h2>
-              <button
-                onClick={() => setVehicleModal({ plate: '', model: '' })}
-                className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors"
-              >
-                + Add Vehicle
+              <h2 className="font-semibold text-gray-800 text-lg">{t.vehiclesTitle} ({vehicles.length})</h2>
+              <button onClick={() => setVehicleModal({ plate: '', model: '' })} className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors">
+                {t.addVehicle}
               </button>
             </div>
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
               {vehicles.length === 0 ? (
-                <p className="text-center text-gray-500 py-12">No vehicles yet.</p>
+                <p className="text-center text-gray-500 py-12">{t.noVehicles}</p>
               ) : (
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-100">
                     <tr>
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Plate</th>
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Model</th>
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Year</th>
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Driver</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">{t.colPlate}</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">{t.colModel}</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">{t.colYear}</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">{t.colDriver}</th>
                       <th className="px-5 py-3"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
                     {vehicles.map(v => (
                       <tr key={v.id} className="hover:bg-gray-50">
-                        <td className="px-5 py-3">
-                          <span className="font-mono font-semibold bg-gray-100 px-2 py-0.5 rounded text-sm">{v.plate}</span>
-                        </td>
+                        <td className="px-5 py-3"><span className="font-mono font-semibold bg-gray-100 px-2 py-0.5 rounded text-sm">{v.plate}</span></td>
                         <td className="px-5 py-3 text-gray-700">{v.model}</td>
                         <td className="px-5 py-3 text-gray-500">{v.year || '—'}</td>
-                        <td className="px-5 py-3 text-gray-600">{v.driver_name || <span className="text-gray-500">Unassigned</span>}</td>
+                        <td className="px-5 py-3 text-gray-600">{v.driver_name || <span className="text-gray-500">{t.unassigned}</span>}</td>
                         <td className="px-5 py-3 text-right">
                           <div className="flex items-center gap-2 justify-end">
-                            <button onClick={() => setVehicleModal(v)} className="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-2 py-1 rounded-lg transition-colors">Edit</button>
-                            <button onClick={() => deleteVehicle(v.id)} className="text-xs bg-red-50 hover:bg-red-100 text-red-600 px-2 py-1 rounded-lg transition-colors">Delete</button>
+                            <button onClick={() => setVehicleModal(v)} className="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-2 py-1 rounded-lg transition-colors">{t.btnEdit}</button>
+                            <button onClick={() => deleteVehicle(v.id)} className="text-xs bg-red-50 hover:bg-red-100 text-red-600 px-2 py-1 rounded-lg transition-colors">{t.btnDelete}</button>
                           </div>
                         </td>
                       </tr>
@@ -625,26 +738,26 @@ export default function Dashboard() {
         {tab === 'ratings' && (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-gray-800 text-lg">Feedback</h2>
+              <h2 className="font-semibold text-gray-800 text-lg">{t.feedbackTitle}</h2>
               <div className="flex gap-2">
                 {(['all', 'negative'] as const).map(f => (
                   <button
                     key={f}
                     onClick={() => setRatingFilter(f)}
-                    className={`text-sm px-3 py-1.5 rounded-lg capitalize transition-colors ${
+                    className={`text-sm px-3 py-1.5 rounded-lg transition-colors ${
                       ratingFilter === f
                         ? f === 'negative' ? 'bg-red-600 text-white' : 'bg-blue-600 text-white'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                   >
-                    {f === 'negative' ? '⚠ Negative only' : 'All'}
+                    {f === 'negative' ? t.filterNegative : t.filterAll}
                   </button>
                 ))}
               </div>
             </div>
             <div className="space-y-3">
               {ratings.length === 0 ? (
-                <p className="text-center text-gray-500 py-12">No feedback yet.</p>
+                <p className="text-center text-gray-500 py-12">{t.noFeedback}</p>
               ) : (
                 ratings.map(r => (
                   <div key={r.id} className={`bg-white rounded-xl shadow-sm border p-4 ${r.stars <= 2 ? 'border-red-100' : 'border-gray-100'}`}>
@@ -657,13 +770,11 @@ export default function Dashboard() {
                           {Array.from({ length: 5 }, (_, i) => (
                             <span key={i} className={i < r.stars ? 'text-yellow-400' : 'text-gray-300'}>★</span>
                           ))}
-                          {r.stars <= 2 && <span className="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full ml-1">Negative</span>}
+                          {r.stars <= 2 && <span className="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full ml-1">{t.negative}</span>}
                         </div>
                         {r.comment && <p className="text-gray-600 text-sm mt-2">{r.comment}</p>}
                       </div>
-                      <p className="text-xs text-gray-600 whitespace-nowrap ml-4">
-                        {new Date(r.created_at).toLocaleDateString()}
-                      </p>
+                      <p className="text-xs text-gray-600 whitespace-nowrap ml-4">{new Date(r.created_at).toLocaleDateString()}</p>
                     </div>
                   </div>
                 ))
@@ -677,20 +788,17 @@ export default function Dashboard() {
       {qrModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setQrModal(null)}>
           <div className="bg-white rounded-2xl p-6 max-w-xs w-full" onClick={e => e.stopPropagation()}>
-            <h3 className="font-bold text-gray-800 text-center mb-1">QR Code</h3>
+            <h3 className="font-bold text-gray-800 text-center mb-1">{t.qrTitle}</h3>
             <p className="text-sm text-gray-500 text-center mb-4">{qrModal.name}</p>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={`/api/admin/qr/${qrModal.id}`} alt={`QR for ${qrModal.name}`} className="w-full rounded-xl border border-gray-100" />
-            <p className="text-xs text-gray-500 text-center mt-3">Right-click → Save to download</p>
+            <p className="text-xs text-gray-500 text-center mt-3">{t.qrHint}</p>
             <div className="flex gap-2 mt-4">
-              <Link
-                href={`/admin/drivers/${qrModal.id}`}
-                className="flex-1 text-center bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-2 rounded-xl transition-colors text-sm"
-              >
-                View Profile
+              <Link href={`/admin/drivers/${qrModal.id}`} className="flex-1 text-center bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-2 rounded-xl transition-colors text-sm">
+                {t.viewProfile}
               </Link>
               <button onClick={() => setQrModal(null)} className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 rounded-xl transition-colors text-sm">
-                Close
+                {t.close}
               </button>
             </div>
           </div>
@@ -701,27 +809,15 @@ export default function Dashboard() {
       {driverModal !== null && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full">
-            <h3 className="font-bold text-gray-800 mb-4">{driverModal.id ? 'Edit Driver' : 'Add Driver'}</h3>
+            <h3 className="font-bold text-gray-800 mb-4">{driverModal.id ? t.editDriverTitle : t.addDriverTitle}</h3>
             <div className="space-y-3">
-              <input
-                type="text"
-                placeholder="Full name *"
-                value={driverModal.name || ''}
-                onChange={e => setDriverModal({ ...driverModal, name: e.target.value })}
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
-              />
-              <input
-                type="text"
-                placeholder="Phone (optional)"
-                value={driverModal.phone || ''}
-                onChange={e => setDriverModal({ ...driverModal, phone: e.target.value })}
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
-              />
+              <input type="text" placeholder={t.namePlaceholder} value={driverModal.name || ''} onChange={e => setDriverModal({ ...driverModal, name: e.target.value })} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" />
+              <input type="text" placeholder={t.phonePlaceholder} value={driverModal.phone || ''} onChange={e => setDriverModal({ ...driverModal, phone: e.target.value })} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" />
             </div>
             <div className="flex gap-2 mt-5">
-              <button onClick={() => setDriverModal(null)} className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 rounded-xl text-sm">Cancel</button>
+              <button onClick={() => setDriverModal(null)} className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 rounded-xl text-sm">{t.cancel}</button>
               <button onClick={saveDriver} disabled={saving || !driverModal.name?.trim()} className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-medium py-2.5 rounded-xl text-sm">
-                {saving ? 'Saving...' : 'Save'}
+                {saving ? t.saving : t.save}
               </button>
             </div>
           </div>
@@ -732,44 +828,22 @@ export default function Dashboard() {
       {vehicleModal !== null && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full">
-            <h3 className="font-bold text-gray-800 mb-4">{vehicleModal.id ? 'Edit Vehicle' : 'Add Vehicle'}</h3>
+            <h3 className="font-bold text-gray-800 mb-4">{vehicleModal.id ? t.editVehicleTitle : t.addVehicleTitle}</h3>
             <div className="space-y-3">
-              <input
-                type="text"
-                placeholder="Plate number *"
-                value={vehicleModal.plate || ''}
-                onChange={e => setVehicleModal({ ...vehicleModal, plate: e.target.value })}
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-blue-300"
-              />
-              <input
-                type="text"
-                placeholder="Model (e.g. Toyota Innova) *"
-                value={vehicleModal.model || ''}
-                onChange={e => setVehicleModal({ ...vehicleModal, model: e.target.value })}
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
-              />
-              <input
-                type="number"
-                placeholder="Year (optional)"
-                value={vehicleModal.year || ''}
-                onChange={e => setVehicleModal({ ...vehicleModal, year: e.target.value ? Number(e.target.value) : undefined })}
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
-              />
-              <select
-                value={vehicleModal.driver_id || ''}
-                onChange={e => setVehicleModal({ ...vehicleModal, driver_id: e.target.value ? Number(e.target.value) : undefined })}
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white"
-              >
-                <option value="">— No driver assigned —</option>
+              <input type="text" placeholder={t.platePlaceholder} value={vehicleModal.plate || ''} onChange={e => setVehicleModal({ ...vehicleModal, plate: e.target.value })} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-blue-300" />
+              <input type="text" placeholder={t.modelPlaceholder} value={vehicleModal.model || ''} onChange={e => setVehicleModal({ ...vehicleModal, model: e.target.value })} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" />
+              <input type="number" placeholder={t.yearPlaceholder} value={vehicleModal.year || ''} onChange={e => setVehicleModal({ ...vehicleModal, year: e.target.value ? Number(e.target.value) : undefined })} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" />
+              <select value={vehicleModal.driver_id || ''} onChange={e => setVehicleModal({ ...vehicleModal, driver_id: e.target.value ? Number(e.target.value) : undefined })} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white">
+                <option value="">{t.noDriverAssigned}</option>
                 {drivers.filter(d => d.is_active).map(d => (
                   <option key={d.id} value={d.id}>{d.name}</option>
                 ))}
               </select>
             </div>
             <div className="flex gap-2 mt-5">
-              <button onClick={() => setVehicleModal(null)} className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 rounded-xl text-sm">Cancel</button>
+              <button onClick={() => setVehicleModal(null)} className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 rounded-xl text-sm">{t.cancel}</button>
               <button onClick={saveVehicle} disabled={saving || !vehicleModal.plate?.trim() || !vehicleModal.model?.trim()} className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-medium py-2.5 rounded-xl text-sm">
-                {saving ? 'Saving...' : 'Save'}
+                {saving ? t.saving : t.save}
               </button>
             </div>
           </div>
