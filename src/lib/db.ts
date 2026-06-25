@@ -91,6 +91,8 @@ function initSqlite(db: import('better-sqlite3').Database) {
       comment TEXT,
       customer_name TEXT,
       customer_contact TEXT,
+      route_from TEXT,
+      route_to TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
     CREATE TABLE IF NOT EXISTS alerts (
@@ -115,6 +117,12 @@ function initSqlite(db: import('better-sqlite3').Database) {
   }
   if (!ratingCols.find(c => c.name === 'customer_contact')) {
     db.exec("ALTER TABLE ratings ADD COLUMN customer_contact TEXT");
+  }
+  if (!ratingCols.find(c => c.name === 'route_from')) {
+    db.exec("ALTER TABLE ratings ADD COLUMN route_from TEXT");
+  }
+  if (!ratingCols.find(c => c.name === 'route_to')) {
+    db.exec("ALTER TABLE ratings ADD COLUMN route_to TEXT");
   }
 }
 
@@ -146,11 +154,15 @@ async function initPostgres(db: DB) {
       comment TEXT,
       customer_name TEXT,
       customer_contact TEXT,
+      route_from TEXT,
+      route_to TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `);
   await db.query(`ALTER TABLE ratings ADD COLUMN IF NOT EXISTS customer_name TEXT`);
   await db.query(`ALTER TABLE ratings ADD COLUMN IF NOT EXISTS customer_contact TEXT`);
+  await db.query(`ALTER TABLE ratings ADD COLUMN IF NOT EXISTS route_from TEXT`);
+  await db.query(`ALTER TABLE ratings ADD COLUMN IF NOT EXISTS route_to TEXT`);
   await db.query(`
     CREATE TABLE IF NOT EXISTS alerts (
       id SERIAL PRIMARY KEY,

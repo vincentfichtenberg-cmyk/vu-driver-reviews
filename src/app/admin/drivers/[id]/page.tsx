@@ -18,7 +18,7 @@ interface DriverProfile {
   vehicle_year: number | null;
   avg_stars: number | null;
   total_reviews: number;
-  recent_ratings: { id: number; stars: number; comment: string | null; customer_name: string | null; customer_contact: string | null; created_at: string }[];
+  recent_ratings: { id: number; stars: number; comment: string | null; customer_name: string | null; customer_contact: string | null; route_from: string | null; route_to: string | null; created_at: string }[];
 }
 
 const T = {
@@ -352,9 +352,19 @@ export default function DriverProfilePage() {
                     <span className="text-xs text-gray-600">{new Date(r.created_at).toLocaleDateString()}</span>
                   </div>
                   {r.comment && <p className="text-gray-700 text-sm mt-2">{r.comment}</p>}
-                  <div className="flex items-center gap-3 mt-2 pt-2 border-t border-gray-200/50">
-                    <span className="text-xs text-gray-400">👤 {r.customer_name || t.anonymous}</span>
-                    {r.customer_contact && <span className="text-xs text-gray-400">📞 {r.customer_contact}</span>}
+                  <div className="mt-2 pt-2 border-t border-gray-200/50 space-y-1">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-gray-400">👤 {r.customer_name || t.anonymous}</span>
+                      {r.customer_contact && <span className="text-xs text-gray-400">📞 {r.customer_contact}</span>}
+                    </div>
+                    {(r.route_from || r.route_to) && (
+                      <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                        <span>🗺</span>
+                        {r.route_from && <span className="text-green-600">{r.route_from}</span>}
+                        {r.route_from && r.route_to && <span>→</span>}
+                        {r.route_to && <span className="text-red-500">{r.route_to}</span>}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

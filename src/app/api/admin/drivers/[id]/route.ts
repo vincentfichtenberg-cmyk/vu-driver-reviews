@@ -25,7 +25,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   if (!rows.length) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   const recentRatings = await db.query(
-    'SELECT id, stars, comment, customer_name, customer_contact, created_at FROM ratings WHERE driver_id = $1 ORDER BY created_at DESC LIMIT 50',
+    'SELECT id, stars, comment, customer_name, customer_contact, route_from, route_to, created_at FROM ratings WHERE driver_id = $1 ORDER BY created_at DESC LIMIT 50',
     [Number(id)]
   );
 

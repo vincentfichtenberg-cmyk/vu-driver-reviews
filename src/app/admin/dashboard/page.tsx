@@ -27,6 +27,8 @@ interface Rating {
   comment: string | null;
   customer_name: string | null;
   customer_contact: string | null;
+  route_from: string | null;
+  route_to: string | null;
   created_at: string;
 }
 
@@ -584,9 +586,19 @@ export default function Dashboard() {
                           {r.stars <= 2 && <span className="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full ml-1">{t.negative}</span>}
                         </div>
                         {r.comment && <p className="text-gray-600 text-sm mt-2">{r.comment}</p>}
-                        <div className="flex items-center gap-3 mt-2 pt-2 border-t border-gray-50">
-                          <span className="text-xs text-gray-400">👤 {r.customer_name || t.anonymous}</span>
-                          {r.customer_contact && <span className="text-xs text-gray-400">📞 {r.customer_contact}</span>}
+                        <div className="mt-2 pt-2 border-t border-gray-50 space-y-1">
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs text-gray-400">👤 {r.customer_name || t.anonymous}</span>
+                            {r.customer_contact && <span className="text-xs text-gray-400">📞 {r.customer_contact}</span>}
+                          </div>
+                          {(r.route_from || r.route_to) && (
+                            <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                              <span>🗺</span>
+                              {r.route_from && <span className="text-green-600">{r.route_from}</span>}
+                              {r.route_from && r.route_to && <span>→</span>}
+                              {r.route_to && <span className="text-red-500">{r.route_to}</span>}
+                            </div>
+                          )}
                         </div>
                       </div>
                       <p className="text-xs text-gray-600 whitespace-nowrap ml-4">{new Date(r.created_at).toLocaleDateString()}</p>

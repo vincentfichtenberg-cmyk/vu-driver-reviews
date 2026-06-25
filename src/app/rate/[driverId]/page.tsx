@@ -26,6 +26,9 @@ const T = {
     yourInfoHint: 'Help us follow up on your feedback.',
     namePlaceholder: 'Your name',
     contactPlaceholder: 'Phone or email',
+    routeSection: 'Trip Route (optional)',
+    routeFromPlaceholder: 'Pickup location (e.g. 123 Main St)',
+    routeToPlaceholder: 'Drop-off location (e.g. Airport)',
     submit: 'Submit Review',
     submitting: 'Submitting...',
     thankYou: 'Thank you!',
@@ -49,6 +52,9 @@ const T = {
     yourInfoHint: 'Giúp chúng tôi theo dõi phản hồi của bạn.',
     namePlaceholder: 'Tên của bạn',
     contactPlaceholder: 'Số điện thoại hoặc email',
+    routeSection: 'Lộ trình (tùy chọn)',
+    routeFromPlaceholder: 'Điểm đón (vd. 123 Nguyễn Huệ)',
+    routeToPlaceholder: 'Điểm đến (vd. Sân bay)',
     submit: 'Gửi đánh giá',
     submitting: 'Đang gửi...',
     thankYou: 'Cảm ơn bạn!',
@@ -73,6 +79,8 @@ export default function RatePage() {
   const [comment, setComment] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [customerContact, setCustomerContact] = useState('');
+  const [routeFrom, setRouteFrom] = useState('');
+  const [routeTo, setRouteTo] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -104,7 +112,7 @@ export default function RatePage() {
     const res = await fetch('/api/rate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ driverId: Number(driverId), stars, comment, customerName, customerContact }),
+      body: JSON.stringify({ driverId: Number(driverId), stars, comment, customerName, customerContact, routeFrom, routeTo }),
     });
     if (res.ok) {
       setSubmitted(true);
@@ -230,26 +238,55 @@ export default function RatePage() {
               />
             </div>
 
-            <div className="mb-6 bg-gray-50 rounded-xl p-4">
-              <p className="text-sm font-medium text-gray-700 mb-0.5">{t.yourInfo}</p>
-              <p className="text-xs text-gray-500 mb-3">{t.yourInfoHint}</p>
-              <div className="space-y-3">
-                <input
-                  type="text"
-                  value={customerName}
-                  onChange={e => setCustomerName(e.target.value)}
-                  placeholder={t.namePlaceholder}
-                  maxLength={100}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
-                />
-                <input
-                  type="text"
-                  value={customerContact}
-                  onChange={e => setCustomerContact(e.target.value)}
-                  placeholder={t.contactPlaceholder}
-                  maxLength={100}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
-                />
+            <div className="mb-6 bg-gray-50 rounded-xl p-4 space-y-4">
+              <div>
+                <p className="text-sm font-medium text-gray-700 mb-0.5">{t.yourInfo}</p>
+                <p className="text-xs text-gray-500 mb-3">{t.yourInfoHint}</p>
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    value={customerName}
+                    onChange={e => setCustomerName(e.target.value)}
+                    placeholder={t.namePlaceholder}
+                    maxLength={100}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  />
+                  <input
+                    type="text"
+                    value={customerContact}
+                    onChange={e => setCustomerContact(e.target.value)}
+                    placeholder={t.contactPlaceholder}
+                    maxLength={100}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  />
+                </div>
+              </div>
+              <div className="border-t border-gray-200 pt-4">
+                <p className="text-sm font-medium text-gray-700 mb-3">{t.routeSection}</p>
+                <div className="space-y-3">
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-green-500 text-sm">●</span>
+                    <input
+                      type="text"
+                      value={routeFrom}
+                      onChange={e => setRouteFrom(e.target.value)}
+                      placeholder={t.routeFromPlaceholder}
+                      maxLength={200}
+                      className="w-full border border-gray-200 rounded-xl pl-8 pr-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+                    />
+                  </div>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-red-500 text-sm">●</span>
+                    <input
+                      type="text"
+                      value={routeTo}
+                      onChange={e => setRouteTo(e.target.value)}
+                      placeholder={t.routeToPlaceholder}
+                      maxLength={200}
+                      className="w-full border border-gray-200 rounded-xl pl-8 pr-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
