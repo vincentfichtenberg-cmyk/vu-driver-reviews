@@ -10,10 +10,54 @@ interface Driver {
   vehicle_model: string | null;
 }
 
+type Lang = 'en' | 'vi';
+
+const T = {
+  en: {
+    title: 'Rate Your Driver',
+    subtitle: 'VU Transportation',
+    driver: 'Driver',
+    vehicle: 'Vehicle',
+    howWasTrip: 'How was your trip?',
+    labels: ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'],
+    commentsLabel: 'Comments (optional)',
+    placeholder: 'Share your experience...',
+    submit: 'Submit Review',
+    submitting: 'Submitting...',
+    thankYou: 'Thank you!',
+    feedbackSubmitted: (name: string) => `Your feedback for ${name} has been submitted.`,
+    notFound: 'Driver not found',
+    notFoundMsg: 'This QR code is invalid or the driver no longer exists.',
+    errorStar: 'Please select a star rating.',
+    errorGeneral: 'Something went wrong. Please try again.',
+    footer: 'VU Transportation Service',
+  },
+  vi: {
+    title: 'Đánh Giá Tài Xế',
+    subtitle: 'Vận Tải VU',
+    driver: 'Tài xế',
+    vehicle: 'Xe',
+    howWasTrip: 'Chuyến đi của bạn thế nào?',
+    labels: ['', 'Tệ', 'Tạm được', 'Tốt', 'Rất tốt', 'Xuất sắc'],
+    commentsLabel: 'Nhận xét (tùy chọn)',
+    placeholder: 'Chia sẻ trải nghiệm của bạn...',
+    submit: 'Gửi đánh giá',
+    submitting: 'Đang gửi...',
+    thankYou: 'Cảm ơn bạn!',
+    feedbackSubmitted: (name: string) => `Phản hồi của bạn cho ${name} đã được gửi.`,
+    notFound: 'Không tìm thấy tài xế',
+    notFoundMsg: 'Mã QR này không hợp lệ hoặc tài xế không còn tồn tại.',
+    errorStar: 'Vui lòng chọn số sao.',
+    errorGeneral: 'Có lỗi xảy ra. Vui lòng thử lại.',
+    footer: 'Dịch vụ vận tải VU',
+  },
+};
+
 export default function RatePage() {
   const params = useParams();
   const driverId = params.driverId as string;
 
+  const [lang, setLang] = useState<Lang>('vi');
   const [driver, setDriver] = useState<Driver | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [stars, setStars] = useState(0);
@@ -22,6 +66,18 @@ export default function RatePage() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const t = T[lang];
+
+  useEffect(() => {
+    const saved = localStorage.getItem('vu-lang') as Lang | null;
+    if (saved === 'en' || saved === 'vi') setLang(saved);
+  }, []);
+
+  function switchLang(l: Lang) {
+    setLang(l);
+    localStorage.setItem('vu-lang', l);
+  }
 
   useEffect(() => {
     fetch(`/api/drivers/${driverId}/public`)
@@ -32,7 +88,7 @@ export default function RatePage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (stars === 0) { setError('Please select a star rating.'); return; }
+    if (stars === 0) { setError(t.errorStar); return; }
     setLoading(true);
     setError('');
     const res = await fetch('/api/rate', {
@@ -43,17 +99,36 @@ export default function RatePage() {
     if (res.ok) {
       setSubmitted(true);
     } else {
-      setError('Something went wrong. Please try again.');
+      setError(t.errorGeneral);
     }
     setLoading(false);
   }
 
+  // Language toggle component
+  const LangToggle = () => (
+    <div className="flex gap-1 bg-gray-100 rounded-lg p-1 text-xs font-medium">
+      <button
+        onClick={() => switchLang('vi')}
+        className={`px-2.5 py-1 rounded-md transition-colors ${lang === 'vi' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+      >
+        🇻🇳 VI
+      </button>
+      <button
+        onClick={() => switchLang('en')}
+        className={`px-2.5 py-1 rounded-md transition-colors ${lang === 'en' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+      >
+        🇬🇧 EN
+      </button>
+    </div>
+  );
+
   if (notFound) return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center p-8">
+        <div className="absolute top-4 right-4"><LangToggle /></div>
         <div className="text-6xl mb-4">🚗</div>
-        <h1 className="text-2xl font-bold text-gray-700">Driver not found</h1>
-        <p className="text-gray-500 mt-2">This QR code is invalid or the driver no longer exists.</p>
+        <h1 className="text-2xl font-bold text-gray-700">{t.notFound}</h1>
+        <p className="text-gray-500 mt-2">{t.notFoundMsg}</p>
       </div>
     </div>
   );
@@ -68,8 +143,8 @@ export default function RatePage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-white">
       <div className="text-center p-8 max-w-sm">
         <div className="text-6xl mb-4">✅</div>
-        <h1 className="text-2xl font-bold text-gray-800">Thank you!</h1>
-        <p className="text-gray-500 mt-2">Your feedback for <strong>{driver.name}</strong> has been submitted.</p>
+        <h1 className="text-2xl font-bold text-gray-800">{t.thankYou}</h1>
+        <p className="text-gray-500 mt-2">{t.feedbackSubmitted(driver.name)}</p>
       </div>
     </div>
   );
@@ -77,24 +152,29 @@ export default function RatePage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-start justify-center py-10 px-4">
       <div className="w-full max-w-md">
+        {/* Language toggle */}
+        <div className="flex justify-end mb-3">
+          <LangToggle />
+        </div>
+
         <div className="bg-white rounded-2xl shadow-lg p-6">
           <div className="text-center mb-6">
             <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
               <span className="text-3xl">🚗</span>
             </div>
-            <h1 className="text-xl font-bold text-gray-800">Rate Your Driver</h1>
-            <p className="text-gray-500 text-sm mt-1">VU Transportation</p>
+            <h1 className="text-xl font-bold text-gray-800">{t.title}</h1>
+            <p className="text-gray-500 text-sm mt-1">{t.subtitle}</p>
           </div>
 
           <div className="bg-gray-50 rounded-xl p-4 mb-6">
             <div className="flex justify-between text-sm">
               <div>
-                <p className="text-gray-500">Driver</p>
+                <p className="text-gray-500">{t.driver}</p>
                 <p className="font-semibold text-gray-800">{driver.name}</p>
               </div>
               {driver.vehicle_plate && (
                 <div className="text-right">
-                  <p className="text-gray-500">Vehicle</p>
+                  <p className="text-gray-500">{t.vehicle}</p>
                   <p className="font-semibold text-gray-800">{driver.vehicle_plate}</p>
                   {driver.vehicle_model && <p className="text-xs text-gray-600">{driver.vehicle_model}</p>}
                 </div>
@@ -104,7 +184,7 @@ export default function RatePage() {
 
           <form onSubmit={handleSubmit}>
             <div className="mb-6">
-              <p className="text-sm font-medium text-gray-700 mb-3 text-center">How was your trip?</p>
+              <p className="text-sm font-medium text-gray-700 mb-3 text-center">{t.howWasTrip}</p>
               <div className="flex justify-center gap-2">
                 {[1, 2, 3, 4, 5].map(n => (
                   <button
@@ -121,19 +201,19 @@ export default function RatePage() {
               </div>
               {stars > 0 && (
                 <p className="text-center text-sm text-gray-500 mt-2">
-                  {['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'][stars]}
+                  {t.labels[stars]}
                 </p>
               )}
             </div>
 
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Comments (optional)
+                {t.commentsLabel}
               </label>
               <textarea
                 value={comment}
                 onChange={e => setComment(e.target.value)}
-                placeholder="Share your experience..."
+                placeholder={t.placeholder}
                 rows={3}
                 maxLength={500}
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 resize-none"
@@ -147,11 +227,11 @@ export default function RatePage() {
               disabled={loading}
               className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold py-3 rounded-xl transition-colors"
             >
-              {loading ? 'Submitting...' : 'Submit Review'}
+              {loading ? t.submitting : t.submit}
             </button>
           </form>
         </div>
-        <p className="text-center text-xs text-gray-500 mt-4">VU Transportation Service</p>
+        <p className="text-center text-xs text-gray-500 mt-4">{t.footer}</p>
       </div>
     </div>
   );

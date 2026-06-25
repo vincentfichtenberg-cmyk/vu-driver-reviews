@@ -91,6 +91,15 @@ function initSqlite(db: import('better-sqlite3').Database) {
       comment TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
+    CREATE TABLE IF NOT EXISTS alerts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      driver_id INTEGER NOT NULL REFERENCES drivers(id) ON DELETE CASCADE,
+      driver_name TEXT NOT NULL,
+      stars INTEGER NOT NULL,
+      comment TEXT,
+      is_read INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
   `);
   // Migration: add is_active if missing
   const cols = db.prepare("PRAGMA table_info(drivers)").all() as { name: string }[];
@@ -125,6 +134,17 @@ async function initPostgres(db: DB) {
       driver_id INTEGER NOT NULL REFERENCES drivers(id) ON DELETE CASCADE,
       stars INTEGER NOT NULL CHECK(stars BETWEEN 1 AND 5),
       comment TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS alerts (
+      id SERIAL PRIMARY KEY,
+      driver_id INTEGER NOT NULL REFERENCES drivers(id) ON DELETE CASCADE,
+      driver_name TEXT NOT NULL,
+      stars INTEGER NOT NULL,
+      comment TEXT,
+      is_read INTEGER NOT NULL DEFAULT 0,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `);

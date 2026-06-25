@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -41,6 +41,16 @@ interface Ranking {
   total_reviews: number;
 }
 
+interface Alert {
+  id: number;
+  driver_id: number;
+  driver_name: string;
+  stars: number;
+  comment: string | null;
+  is_read: number;
+  created_at: string;
+}
+
 function Stars({ value }: { value: number | null }) {
   if (value === null) return <span className="text-gray-600 text-sm">No reviews</span>;
   return (
@@ -50,6 +60,8 @@ function Stars({ value }: { value: number | null }) {
     </span>
   );
 }
+
+const MEDAL = ['🥇', '🥈', '🥉'];
 
 export default function Dashboard() {
   const router = useRouter();
@@ -66,6 +78,11 @@ export default function Dashboard() {
   const [driverModal, setDriverModal] = useState<Partial<Driver> | null>(null);
   const [vehicleModal, setVehicleModal] = useState<Partial<Vehicle> | null>(null);
   const [saving, setSaving] = useState(false);
+
+  // Alerts state
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [alertsOpen, setAlertsOpen] = useState(false);
+  const alertsRef = useRef<HTMLDivElement>(null);
 
   const fetchDrivers = useCallback(async () => {
     const r = await fetch(`/api/admin/drivers${showInactive ? '?all=1' : ''}`);
@@ -94,14 +111,49 @@ export default function Dashboard() {
     setRankings((await r.json()).rankings);
   }, [router]);
 
+  const fetchAlerts = useCallback(async () => {
+    const r = await fetch('/api/admin/alerts');
+    if (r.ok) setAlerts(await r.json());
+  }, []);
+
   useEffect(() => { fetchDrivers(); }, [fetchDrivers]);
   useEffect(() => { fetchVehicles(); }, [fetchVehicles]);
   useEffect(() => { fetchRatings(); }, [fetchRatings]);
   useEffect(() => { fetchRankings(rankMonth); }, [fetchRankings, rankMonth]);
+  useEffect(() => { fetchAlerts(); }, [fetchAlerts]);
+
+  // Close alerts dropdown on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (alertsRef.current && !alertsRef.current.contains(e.target as Node)) {
+        setAlertsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
 
   async function logout() {
     await fetch('/api/auth/logout', { method: 'POST' });
     router.push('/admin');
+  }
+
+  async function markAlertRead(id: number) {
+    await fetch('/api/admin/alerts', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    });
+    fetchAlerts();
+  }
+
+  async function markAllAlertsRead() {
+    await fetch('/api/admin/alerts', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ all: true }),
+    });
+    fetchAlerts();
   }
 
   async function toggleDriverActive(d: Driver) {
@@ -175,8 +227,18 @@ export default function Dashboard() {
     { id: 'ratings', label: 'Feedback', icon: '⭐' },
   ];
 
+  async function seedDrivers() {
+    if (!confirm('Import the 13 VUHQ drivers from the list? This will skip any already added.')) return;
+    const res = await fetch('/api/admin/seed', { method: 'POST' });
+    const data = await res.json();
+    alert(`Added: ${data.added?.length ?? 0} drivers.\nSkipped (already exist): ${data.skipped?.length ?? 0}`);
+    fetchDrivers();
+    fetchVehicles();
+  }
+
   const activeDrivers = drivers.filter(d => d.is_active);
   const negativeRatings = ratings.filter(r => r.stars <= 2);
+  const unreadAlerts = alerts.filter(a => !a.is_read);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -188,9 +250,88 @@ export default function Dashboard() {
             <p className="text-xs text-gray-500">{activeDrivers.length} active drivers · {vehicles.length} vehicles</p>
           </div>
         </div>
-        <button onClick={logout} className="text-sm text-gray-500 hover:text-red-500 transition-colors">
-          Log out
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Alerts bell */}
+          <div className="relative" ref={alertsRef}>
+            <button
+              onClick={() => setAlertsOpen(!alertsOpen)}
+              className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              title="Alerts"
+            >
+              <span className="text-xl">🔔</span>
+              {unreadAlerts.length > 0 && (
+                <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1">
+                  {unreadAlerts.length > 9 ? '9+' : unreadAlerts.length}
+                </span>
+              )}
+            </button>
+
+            {alertsOpen && (
+              <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                  <h3 className="font-semibold text-gray-800">Alerts</h3>
+                  {unreadAlerts.length > 0 && (
+                    <button
+                      onClick={markAllAlertsRead}
+                      className="text-xs text-blue-600 hover:text-blue-800"
+                    >
+                      Mark all read
+                    </button>
+                  )}
+                </div>
+                {alerts.length === 0 ? (
+                  <p className="text-center text-gray-500 py-6 text-sm">No alerts</p>
+                ) : (
+                  <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
+                    {alerts.map(a => (
+                      <div
+                        key={a.id}
+                        className={`px-4 py-3 flex gap-3 ${!a.is_read ? 'bg-red-50' : ''}`}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-red-500 font-bold text-xs">
+                              {'★'.repeat(a.stars)} {a.stars}★
+                            </span>
+                            {!a.is_read && (
+                              <span className="w-2 h-2 bg-red-500 rounded-full flex-shrink-0" />
+                            )}
+                          </div>
+                          <Link
+                            href={`/admin/drivers/${a.driver_id}`}
+                            onClick={() => { markAlertRead(a.id); setAlertsOpen(false); }}
+                            className="font-medium text-gray-800 hover:text-blue-600 text-sm"
+                          >
+                            {a.driver_name}
+                          </Link>
+                          {a.comment && (
+                            <p className="text-xs text-gray-600 mt-0.5 truncate">{a.comment}</p>
+                          )}
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {new Date(a.created_at).toLocaleString()}
+                          </p>
+                        </div>
+                        {!a.is_read && (
+                          <button
+                            onClick={() => markAlertRead(a.id)}
+                            className="text-xs text-gray-400 hover:text-gray-600 flex-shrink-0 self-start mt-0.5"
+                            title="Dismiss"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <button onClick={logout} className="text-sm text-gray-500 hover:text-red-500 transition-colors">
+            Log out
+          </button>
+        </div>
       </header>
 
       <nav className="bg-white border-b border-gray-200 px-6 flex gap-1">
@@ -236,10 +377,13 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Rankings */}
+            {/* Top 10 Rankings */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold text-gray-800">Monthly Rankings</h2>
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h2 className="font-bold text-gray-800 text-lg">🏆 Top 10 Drivers of the Month</h2>
+                  <p className="text-xs text-gray-500 mt-0.5">Ranked by average star rating</p>
+                </div>
                 <input
                   type="month"
                   value={rankMonth}
@@ -248,25 +392,37 @@ export default function Dashboard() {
                 />
               </div>
               {rankings.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No reviews this month.</p>
+                <p className="text-gray-500 text-center py-10">No reviews recorded this month yet.</p>
               ) : (
                 <div className="space-y-2">
                   {rankings.map((r, i) => (
-                    <div key={r.id} className="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50">
-                      <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0 ${
-                        i === 0 ? 'bg-yellow-100 text-yellow-700' :
-                        i === 1 ? 'bg-gray-100 text-gray-600' :
-                        i === 2 ? 'bg-orange-100 text-orange-700' :
-                        'bg-gray-50 text-gray-500'
-                      }`}>{i + 1}</span>
-                      <div className="flex-1">
-                        <Link href={`/admin/drivers/${r.id}`} className="font-medium text-gray-800 hover:text-blue-600 transition-colors">
-                          {r.name}
-                        </Link>
-                        <p className="text-xs text-gray-500">{r.total_reviews} reviews</p>
+                    <Link
+                      key={r.id}
+                      href={`/admin/drivers/${r.id}`}
+                      className={`flex items-center gap-4 p-3 rounded-xl transition-colors hover:bg-gray-50 ${
+                        i === 0 ? 'bg-yellow-50 border border-yellow-100' :
+                        i === 1 ? 'bg-gray-50 border border-gray-100' :
+                        i === 2 ? 'bg-orange-50 border border-orange-100' :
+                        'border border-transparent'
+                      }`}
+                    >
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0 ${
+                        i === 0 ? 'bg-yellow-200 text-yellow-800' :
+                        i === 1 ? 'bg-gray-200 text-gray-700' :
+                        i === 2 ? 'bg-orange-200 text-orange-700' :
+                        'bg-gray-100 text-gray-600'
+                      }`}>
+                        {i < 3 ? MEDAL[i] : i + 1}
                       </div>
-                      <Stars value={r.avg_stars} />
-                    </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-gray-800 truncate">{r.name}</p>
+                        <p className="text-xs text-gray-500">{r.total_reviews} review{r.total_reviews !== 1 ? 's' : ''}</p>
+                      </div>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <span className="text-yellow-400 text-sm">{'★'.repeat(Math.round(r.avg_stars))}{'☆'.repeat(5 - Math.round(r.avg_stars))}</span>
+                        <span className="font-bold text-gray-700 text-sm ml-1">{Number(r.avg_stars).toFixed(1)}</span>
+                      </div>
+                    </Link>
                   ))}
                 </div>
               )}
@@ -321,12 +477,20 @@ export default function Dashboard() {
                   Show inactive
                 </label>
               </div>
-              <button
-                onClick={() => setDriverModal({ name: '', phone: '', is_active: 1 })}
-                className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors"
-              >
-                + Add Driver
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={seedDrivers}
+                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium px-4 py-2 rounded-xl transition-colors"
+                >
+                  Import VUHQ List
+                </button>
+                <button
+                  onClick={() => setDriverModal({ name: '', phone: '', is_active: 1 })}
+                  className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors"
+                >
+                  + Add Driver
+                </button>
+              </div>
             </div>
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
               {drivers.length === 0 ? (

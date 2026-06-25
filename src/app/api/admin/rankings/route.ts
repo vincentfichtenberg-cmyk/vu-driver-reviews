@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
     GROUP BY d.id
     HAVING COUNT(r.id) > 0
     ORDER BY avg_stars DESC, total_reviews DESC
+    LIMIT 10
   `, [month]);
 
   return NextResponse.json({ month, rankings });
