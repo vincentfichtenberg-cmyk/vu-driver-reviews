@@ -35,7 +35,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const denied = await auth(); if (denied) return denied;
   const { id } = await params;
-  const { name, phone, is_active, plate } = await req.json();
+  const { name, phone, is_active, plate, model, year } = await req.json();
   if (!name?.trim()) return NextResponse.json({ error: 'Name required' }, { status: 400 });
   const db = await getDb();
 
@@ -50,16 +50,21 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     if (existing.length > 0) {
       if (trimmedPlate) {
-        await db.query('UPDATE vehicles SET plate = $1 WHERE driver_id = $2', [trimmedPlate, Number(id)]);
+        await db.query('UPDATE vehicles SET plate=$1, model=$2, year=$3 WHERE driver_id=$4',
+          [trimmedPlate, model?.trim() || '', year || null, Number(id)]);
+      } else {
+        await db.query('UPDATE vehicles SET model=$1, year=$2 WHERE driver_id=$3',
+          [model?.trim() || '', year || null, Number(id)]);
       }
     } else if (trimmedPlate) {
       const plateConflict = await db.query('SELECT id FROM vehicles WHERE plate = $1', [trimmedPlate]);
       if (plateConflict.length > 0) {
-        await db.query('UPDATE vehicles SET driver_id = $1 WHERE plate = $2', [Number(id), trimmedPlate]);
+        await db.query('UPDATE vehicles SET driver_id=$1, model=$2, year=$3 WHERE plate=$4',
+          [Number(id), model?.trim() || '', year || null, trimmedPlate]);
       } else {
         await db.execute(
-          'INSERT INTO vehicles (plate, model, driver_id) VALUES ($1, $2, $3)',
-          [trimmedPlate, '', Number(id)]
+          'INSERT INTO vehicles (plate, model, year, driver_id) VALUES ($1, $2, $3, $4)',
+          [trimmedPlate, model?.trim() || '', year || null, Number(id)]
         );
       }
     }
